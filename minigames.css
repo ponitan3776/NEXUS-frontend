@@ -1,0 +1,343 @@
+/* =====================================================================
+   🕹 ミニゲーム (v3.2) — 画面・メニュー・各ゲーム・結果
+   重なり順: ロビー(500) < ミニゲーム(620) < ウィンドウ(650) < 更新履歴(700)
+   ===================================================================== */
+#miniScreen{
+  position:fixed; inset:0; z-index:620; display:none; flex-direction:column; align-items:center;
+  background:
+    radial-gradient(ellipse at 50% 120%, rgba(255,120,30,.18), transparent 55%),
+    radial-gradient(circle at 50% -10%, var(--bg-deep2), var(--bg-deep) 65%);
+  padding:max(10px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+  overflow:hidden;
+}
+#miniScreen.show{ display:flex; animation:fadeIn .25s ease-out both; }
+
+.mg-bar{ width:100%; max-width:520px; display:flex; align-items:center; gap:10px; padding:2px 0 10px; }
+.mg-back{ min-height:38px; padding:0 14px; border-radius:var(--r); cursor:pointer; white-space:nowrap;
+  font:800 13px var(--sans); color:var(--text); background:var(--panel); border:1px solid var(--gold-line); }
+.mg-title{ flex:1; font:800 17px var(--serif); letter-spacing:.06em; color:var(--gold); text-align:center; }
+.mg-bestline{ min-width:84px; text-align:right; font:700 11px var(--sans); color:var(--text-dim); }
+
+.mg-body{ flex:1; width:100%; max-width:520px; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; display:flex; flex-direction:column; }
+.mg-lead{ font-size:12px; color:var(--text-dim); text-align:center; margin-bottom:12px; line-height:1.6; }
+.mg-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; padding-bottom:10px; }
+.mg-card{
+  position:relative; display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left; cursor:pointer; padding:14px 14px 12px;
+  background:linear-gradient(160deg, rgba(255,255,255,.08), transparent 55%), var(--panel);
+  border:1px solid rgba(255,255,255,.09); border-radius:var(--r); color:var(--text); box-shadow:0 8px 22px rgba(0,0,0,.28);
+  animation:itemIn .45s var(--out) both; transition:transform .28s var(--spring), border-color .2s;
+}
+.mg-card:hover{ border-color:var(--gold-line); }
+.mg-card:active{ transform:scale(.96); }
+.mg-emo{ font-size:32px; line-height:1; margin-bottom:6px; filter:drop-shadow(0 3px 6px rgba(0,0,0,.4)); }
+.mg-name{ font:800 14px var(--sans); }
+.mg-desc{ font-size:11px; color:var(--text-dim); line-height:1.5; min-height:33px; }
+.mg-best{ margin-top:4px; font:800 10px var(--sans); letter-spacing:.06em; color:var(--gold); }
+
+.mg-stage{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:0; width:100%; }
+.g-score{ font:800 17px var(--serif); color:var(--gold); letter-spacing:.05em; margin-bottom:8px; text-align:center; }
+.g-hint{ font-size:11.5px; color:var(--text-dim); margin-top:8px; text-align:center; line-height:1.6; }
+.mg-btn{ min-height:44px; padding:0 20px; border-radius:var(--r); cursor:pointer; font:800 14px var(--sans); color:#2a1730; border:1px solid rgba(255,255,255,.4);
+  background:linear-gradient(135deg, var(--gold), var(--coral)); box-shadow:inset 0 1px 0 rgba(255,255,255,.5); }
+.mg-btn.ghost{ color:var(--text); background:var(--panel-light); border-color:rgba(255,255,255,.12); box-shadow:none; }
+.mg-btn.small{ min-height:34px; padding:0 12px; font-size:12px; }
+.mg-btn.on{ background:linear-gradient(135deg, var(--coral), var(--pink)); }
+.shake{ animation:hdShake .35s ease-out; }
+
+/* ---------- 2048(タイルがスライド → 合体でぽんっ) ---------- */
+.g2048{ width:100%; max-width:380px; display:flex; flex-direction:column; align-items:center; touch-action:none; }
+.g2048-board{ position:relative; width:100%; aspect-ratio:1; padding:8px; touch-action:none;
+  background:var(--panel); border:1px solid var(--gold-line); border-radius:10px; box-shadow:0 14px 40px rgba(0,0,0,.45), inset 0 0 30px var(--gold-soft); }
+.g2048-bg{ position:absolute; inset:8px; display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.g2048-bg .slot{ border-radius:6px; background:rgba(255,255,255,.06); }
+.g2048-tiles{ position:absolute; inset:8px; }
+.g2048-tiles .tile{ position:absolute; left:0; top:0; width:calc((100% - 24px) / 4); aspect-ratio:1;
+  transform:translate(calc(var(--c) * (100% + 8px)), calc(var(--r) * (100% + 8px))); transition:transform .12s ease-out; will-change:transform; }
+.tile .tin{ display:flex; width:100%; height:100%; align-items:center; justify-content:center; border-radius:6px; color:#fff;
+  font:900 27px var(--serif); text-shadow:0 2px 0 rgba(0,0,0,.25); box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 3px 8px rgba(0,0,0,.3); user-select:none; }
+.tile .tin.spawn{ animation:tileSpawn .2s .1s ease-out backwards; }
+.tile .tin.merge{ animation:tileMerge .24s var(--spring); }
+@keyframes tileSpawn{ from{ transform:scale(.2); opacity:0; } to{ transform:scale(1); opacity:1; } }
+@keyframes tileMerge{ 0%{ transform:scale(1); } 45%{ transform:scale(1.26); } 100%{ transform:scale(1); } }
+.g2048 .g-score{ position:relative; }
+.g2048-board .float-pt{ z-index:3; }
+.g2048 .mg-btn{ margin-top:12px; }
+
+/* ---------- スネーク ---------- */
+.gsnake{ width:100%; max-width:380px; display:flex; flex-direction:column; align-items:center; }
+.gs-canvas{ width:100%; aspect-ratio:1; border-radius:10px; border:1px solid var(--gold-line); box-shadow:0 14px 40px rgba(0,0,0,.45); touch-action:none; background:#120a22; }
+.dpad{ margin-top:10px; display:grid; grid-template-columns:repeat(3,64px); grid-template-areas:". up ." "left . right" ". down ."; gap:6px; }
+.dpad button{ height:50px; font-size:20px; cursor:pointer; color:var(--text); background:var(--panel-light); border:1px solid rgba(255,255,255,.12); border-radius:10px; box-shadow:0 4px 0 rgba(0,0,0,.35); }
+.dpad .up{ grid-area:up; } .dpad .left{ grid-area:left; } .dpad .right{ grid-area:right; } .dpad .down{ grid-area:down; }
+.dpad button:active{ transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.35); background:var(--purple); }
+
+/* ---------- 神経衰弱 ---------- */
+.gmem{ width:100%; max-width:380px; display:flex; flex-direction:column; align-items:center; }
+.gmem-grid{ width:100%; display:grid; grid-template-columns:repeat(4,1fr); gap:9px; }
+.mcard{ aspect-ratio:3/4; padding:0; border:none; background:none; cursor:pointer; perspective:600px; }
+.mc-inner{ position:relative; display:block; width:100%; height:100%; transform-style:preserve-3d; transition:transform .38s var(--out); will-change:transform; }
+.mcard.open .mc-inner, .mcard.done .mc-inner{ transform:rotateY(180deg); }
+.mc-face{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:9px; font-size:34px; border:1px solid var(--gold-line); }
+.mc-back{ background:linear-gradient(145deg, var(--panel-light), var(--panel)); color:var(--gold); box-shadow:0 5px 14px rgba(0,0,0,.35); }
+.mc-front{ transform:rotateY(180deg); background:linear-gradient(145deg, #fff6d6, #ffd98a); }
+.mcard.done .mc-front{ background:linear-gradient(145deg, #c9ffe6, #7fe6b0); animation:bump .4s var(--spring); }
+
+/* ---------- おばけたたき ---------- */
+.gwhack{ width:100%; max-width:380px; display:flex; flex-direction:column; align-items:center; touch-action:manipulation; }
+.gwhack-grid{ width:100%; display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.hole{ position:relative; aspect-ratio:1; border:none; padding:0; border-radius:50%; cursor:pointer; overflow:hidden; touch-action:manipulation;
+  background:radial-gradient(ellipse at 50% 68%, #000 0 46%, #2a1a40 48%, #3a2458 100%); box-shadow:inset 0 -8px 16px rgba(0,0,0,.6), 0 6px 14px rgba(0,0,0,.35); }
+.hole .mole{ position:absolute; left:0; right:0; bottom:14%; text-align:center; font-size:clamp(40px, 13vw, 58px); line-height:1; pointer-events:none;
+  transform:translate3d(0,135%,0); transition:transform .12s ease-out; will-change:transform; }
+.hole.up .mole{ transform:translate3d(0,0,0); }
+.hole[data-t="bad"]{ box-shadow:inset 0 -8px 16px rgba(0,0,0,.6), 0 0 18px rgba(255,60,90,.5); }
+.hole[data-t="gold"]{ box-shadow:inset 0 -8px 16px rgba(0,0,0,.6), 0 0 18px rgba(255,200,60,.6); }
+.float-pt{ position:absolute; left:50%; top:30%; transform:translateX(-50%); font:900 22px var(--serif); pointer-events:none; animation:floatUp .7s ease-out forwards; text-shadow:0 2px 6px rgba(0,0,0,.6); }
+.float-pt.pos{ color:#ffe066; } .float-pt.neg{ color:#ff6b6b; }
+@keyframes floatUp{ from{ opacity:1; transform:translate(-50%,0); } to{ opacity:0; transform:translate(-50%,-46px); } }
+
+/* ---------- マインスイーパー ---------- */
+.gmine{ width:100%; max-width:380px; display:flex; flex-direction:column; align-items:center; }
+.gmine-bar{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; font:800 15px var(--serif); color:var(--gold); }
+.gmine-grid{ width:100%; display:grid; grid-template-columns:repeat(9,1fr); gap:3px; padding:6px; background:var(--panel); border:1px solid var(--gold-line); border-radius:10px; touch-action:manipulation; -webkit-user-select:none; user-select:none; }
+.mc{ aspect-ratio:1; padding:0; display:flex; align-items:center; justify-content:center; font:900 clamp(13px, 4.2vw, 18px) var(--sans); cursor:pointer; color:var(--text);
+  border:none; border-radius:4px; background:linear-gradient(160deg, var(--panel-light), var(--panel)); box-shadow:inset 0 1px 0 rgba(255,255,255,.14), 0 2px 0 rgba(0,0,0,.35); }
+.mc.open{ background:rgba(0,0,0,.28); box-shadow:none; cursor:default; }
+.mc.boom{ background:#a02a3a; }
+.mc[data-n="1"]{ color:#6fa8ff; } .mc[data-n="2"]{ color:#5ee8a0; } .mc[data-n="3"]{ color:#ff7a7a; } .mc[data-n="4"]{ color:#b58cff; }
+.mc[data-n="5"]{ color:#ffb347; } .mc[data-n="6"]{ color:#4fe0e0; } .mc[data-n="7"]{ color:#fff; } .mc[data-n="8"]{ color:#aaa; }
+
+/* ---------- ゴースト・フライト ---------- */
+.gflight{ width:100%; max-width:340px; display:flex; flex-direction:column; align-items:center; touch-action:none; -webkit-user-select:none; user-select:none; }
+.gf-canvas{ width:100%; max-height:calc(100dvh - 190px); aspect-ratio:320/480; object-fit:contain; border-radius:10px; border:1px solid var(--gold-line); box-shadow:0 14px 40px rgba(0,0,0,.45); touch-action:none; }
+
+/* ---------- 結果 ---------- */
+.mg-result{ display:none; position:absolute; inset:0; z-index:5; align-items:center; justify-content:center; padding:20px;
+  background:rgba(6,3,14,.74); -webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px); }
+.mg-result.show{ display:flex; animation:fadeIn .25s ease-out both; }
+.mg-rcard{ width:100%; max-width:340px; text-align:center; padding:24px 20px 20px;
+  background:linear-gradient(160deg, var(--glass-hi), transparent 40%), var(--panel); border:1px solid var(--gold-line); border-radius:var(--r-lg);
+  box-shadow:0 24px 70px rgba(0,0,0,.6), inset 0 0 40px var(--gold-soft); animation:popBounce .5s var(--out) both; }
+.mg-remo{ font-size:44px; line-height:1; }
+.mg-rtitle{ margin-top:6px; font:800 18px var(--serif); color:var(--gold); letter-spacing:.06em; }
+.mg-rtext{ margin-top:6px; font-size:13px; color:var(--text); line-height:1.6; }
+.mg-stars{ margin:10px 0 2px; font-size:26px; letter-spacing:4px; color:#ffd36b; text-shadow:0 0 12px rgba(255,200,80,.5); }
+.mg-stars span{ color:rgba(255,255,255,.14); text-shadow:none; }
+.mg-newbest{ font:800 13px var(--sans); color:var(--mint); margin-top:2px; }
+.mg-reward{ margin:10px 0 16px; font:800 18px var(--serif); color:var(--gold); }
+.mg-btns{ display:flex; gap:10px; } .mg-btns .mg-btn{ flex:1; }
+
+/* ---------- ロビーの大きなタイル ---------- */
+.lobby-tile.wide{ grid-column:span 2; flex-direction:row; align-items:center; justify-content:flex-start; gap:12px; min-height:74px;
+  background:linear-gradient(110deg, rgba(255,140,40,.16), rgba(120,40,160,.2)), var(--panel); border-color:rgba(255,170,70,.4); }
+.lobby-tile.wide .lt-ic{ font-size:30px; }
+.lobby-tile.wide .lt-text{ display:flex; flex-direction:column; text-align:left; flex:1; }
+.lobby-tile.wide .lt-name{ margin-top:0; }
+.lobby-tile.wide .lt-emojis{ font-size:19px; letter-spacing:3px; opacity:.9; }
+.lobby-tile .lt-new{ position:absolute; top:8px; right:10px; background:linear-gradient(135deg,var(--gold),var(--coral)); color:#2a1730; font-size:9px; font-weight:900; letter-spacing:.08em; padding:2px 7px; border-radius:4px; }
+
+/* ---------- ランキング ---------- */
+.mg-rankbtn{ width:100%; min-height:46px; margin-bottom:12px; cursor:pointer; font:800 14px var(--sans); color:#2a1730; border:1px solid rgba(255,255,255,.4); border-radius:var(--r);
+  background:linear-gradient(135deg, var(--gold), var(--coral)); box-shadow:inset 0 1px 0 rgba(255,255,255,.5); }
+.mg-ranktabs{ display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:4px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.mg-ranktabs::-webkit-scrollbar{ display:none; }
+.mg-rtab{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:2px; min-width:74px; padding:8px 8px 6px; cursor:pointer; font-size:20px; color:var(--text);
+  background:var(--panel-light); border:1px solid rgba(255,255,255,.08); border-radius:var(--r); }
+.mg-rtab span{ font:800 9.5px var(--sans); color:var(--text-dim); white-space:nowrap; }
+.mg-rtab.active{ border-color:var(--gold); box-shadow:0 0 0 1px var(--gold), 0 6px 18px var(--gold-soft); }
+.mg-rtab.active span{ color:var(--gold); }
+.mg-rankinfo{ font-size:11px; color:var(--text-dim); text-align:center; margin:2px 0 10px; }
+.mg-ranklist{ display:flex; flex-direction:column; gap:6px; padding-bottom:10px; }
+.mg-rankrow{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--r); background:var(--panel-light); border:1px solid rgba(255,255,255,.06); animation:itemIn .35s var(--out) both; }
+.mg-rankrow.top{ background:linear-gradient(110deg, rgba(255,200,80,.14), transparent 70%), var(--panel-light); border-color:rgba(255,200,80,.3); }
+.mg-rankrow.me{ border-color:var(--gold); box-shadow:0 0 14px var(--gold-soft); }
+.mg-rankrow .rk{ width:34px; text-align:center; font:800 15px var(--serif); color:var(--gold); }
+.mg-rankrow .nm{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:800; font-size:13.5px; }
+.mg-rankrow .sc{ font:800 14px var(--serif); color:var(--text); font-variant-numeric:tabular-nums; }
+.mg-rankme{ margin-top:4px; padding:10px 12px; text-align:center; font:800 13px var(--sans); color:var(--gold); border:1px dashed var(--gold-line); border-radius:var(--r); }
+.mg-rankline{ min-height:18px; margin:-6px 0 12px; font:800 12.5px var(--sans); color:var(--mint); }
+.mg-linkbtn{ margin-top:12px; cursor:pointer; background:none; border:none; color:var(--gold); font:800 13px var(--sans); text-decoration:underline; text-underline-offset:3px; }
+
+/* =====================================================================
+   ⚡ ミニゲームの軽量化 (v3.4.1)
+   ・ミニゲームを開いている間(body.mg-open)は、裏にあるロビーやハロウィン背景を描画・アニメーションさせない
+     (ぼかし・ドロップシャドウ・常時アニメが裏で動き続けていたのが、iPadでのカクつきの主な原因)
+   ・ダブルタップ拡大や長押しメニュー、ゴムバンドスクロールで操作が引っかかるのを防ぐ
+   ===================================================================== */
+body.mg-open #hwBg,
+body.mg-open.hw::before,
+body.mg-open.hw::after{ display:none !important; }
+body.mg-open #titleScreen,
+body.mg-open #app{ visibility:hidden; }
+body.mg-open #titleScreen,
+body.mg-open #titleScreen *,
+body.mg-open #app,
+body.mg-open #app *{ animation-play-state:paused !important; }
+#miniScreen{ touch-action:manipulation; -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; overscroll-behavior:none; }
+#miniScreen .mg-body{ overscroll-behavior:contain; }
+#miniScreen .mg-body.play{ overflow-x:hidden; }
+#miniScreen .mg-card{ will-change:auto; }
+@media (prefers-reduced-motion: reduce){ .g2048-tiles .tile{ transition:none; } }
+
+/* =====================================================================
+   🕹 ミニゲーム パート2 (v3.6) — 見分けやすいメニュー + 新ゲームの見た目
+   ・ジャンルごとに色分け(アクション=オレンジ / パズル=青 / はんしゃ=緑 / あたま=紫)
+   ・NEWバッジ / 遊んだ印(✔) / ジャンル絞り込み
+   ===================================================================== */
+.mg-genres{ display:flex; gap:6px; overflow-x:auto; padding:2px 0 10px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.mg-genres::-webkit-scrollbar{ display:none; }
+.mg-gchip{
+  flex:0 0 auto; min-height:38px; padding:0 14px; border-radius:999px; cursor:pointer; white-space:nowrap;
+  font:800 13px var(--sans); color:var(--text); background:var(--panel); border:2px solid rgba(255,255,255,.12);
+}
+.mg-gchip.active{ color:#241028; background:linear-gradient(135deg, var(--gold), var(--coral)); border-color:#fff; box-shadow:0 4px 14px var(--gold-soft); }
+
+.mg-card{ --gc:#ff9a3d; border-left:6px solid var(--gc); min-height:128px; }
+.mg-card.g-action{ --gc:#ff9a3d; }
+.mg-card.g-puzzle{ --gc:#5c9dff; }
+.mg-card.g-reflex{ --gc:#3ddc84; }
+.mg-card.g-brain{ --gc:#b97bff; }
+.mg-genre{ position:absolute; right:10px; top:10px; padding:2px 8px; border-radius:999px; font:800 10px var(--sans); color:#1b1030; background:var(--gc); }
+.mg-emo{ font-size:30px; line-height:1.1; }
+.mg-name{ font-weight:800; font-size:14px; }
+.mg-new{ position:absolute; left:-4px; top:-8px; z-index:2; padding:2px 8px; border-radius:6px; font:900 10px var(--sans); letter-spacing:.08em;
+  color:#fff; background:linear-gradient(135deg,#ff3d6e,#ff8a1f); box-shadow:0 3px 10px rgba(255,60,110,.5); animation:m2Pulse 1.6s ease-in-out infinite; }
+.mg-stamp{ position:absolute; right:10px; bottom:10px; width:22px; height:22px; border-radius:50%; display:grid; place-items:center;
+  font:900 13px var(--sans); color:#10301c; background:#3ddc84; box-shadow:0 2px 8px rgba(61,220,132,.5); }
+.mg-lead b{ color:var(--gold); }
+@keyframes m2Pulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.1); } }
+
+/* ---------- 共通 ---------- */
+.m2-wrap{ width:100%; max-width:400px; display:flex; flex-direction:column; align-items:center; }
+.m2-canvas{ width:100%; max-width:340px; border-radius:12px; border:1px solid var(--gold-line); box-shadow:0 14px 40px rgba(0,0,0,.45); background:#120a22; touch-action:none; display:block; }
+.m2-canvas.wide{ max-width:400px; }
+.m2-canvas.sq{ max-width:336px; aspect-ratio:1; }
+.m2-duck{ margin-top:10px; width:100%; max-width:340px; min-height:52px; font-size:15px; }
+.m2-timebar{ width:100%; max-width:340px; height:10px; border-radius:6px; background:rgba(255,255,255,.1); overflow:hidden; margin-bottom:10px; }
+.m2-timebar i{ display:block; height:100%; width:100%; background:linear-gradient(90deg,#ff3d6e,#ffb347,#3ddc84); transition:width .1s linear; }
+
+/* ---------- シモン ---------- */
+.m2-simon-msg{ min-height:26px; font:800 15px var(--sans); color:var(--text); margin-bottom:10px; }
+.m2-simon{ display:grid; grid-template-columns:1fr 1fr; gap:12px; width:100%; max-width:320px; }
+.m2-pad{ aspect-ratio:1; font-size:46px; cursor:pointer; border-radius:20px; border:3px solid rgba(255,255,255,.25); color:rgba(0,0,0,.35);
+  background:color-mix(in srgb, var(--c) 40%, #1a1030); transition:transform .1s, filter .1s, box-shadow .1s; touch-action:manipulation; }
+.m2-pad.lit{ background:var(--c); transform:scale(1.05); box-shadow:0 0 34px var(--c); color:#fff; filter:brightness(1.3); }
+
+/* ---------- 反射神経 ---------- */
+.m2-reflex{ width:100%; max-width:340px; min-height:240px; border-radius:20px; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+  font:800 18px var(--sans); color:#fff; border:3px solid rgba(255,255,255,.25); touch-action:manipulation; user-select:none; }
+.m2-reflex .rf-emo{ font-size:64px; }
+.m2-reflex.wait{ background:linear-gradient(160deg,#3a1c5c,#1c0f33); }
+.m2-reflex.go{ background:linear-gradient(160deg,#18c46a,#0b7a3e); box-shadow:0 0 40px rgba(61,220,132,.6); }
+.m2-reflex.early{ background:linear-gradient(160deg,#d23a4a,#7a1426); }
+.m2-rflist{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:12px; font-size:12px; color:var(--text-dim); }
+.m2-rflist b{ color:var(--gold); }
+
+/* ---------- 計算 ---------- */
+.m2-q{ font:800 40px var(--serif); color:var(--text); margin:8px 0 16px; letter-spacing:.04em; transition:color .1s; }
+.m2-q.good{ color:#3ddc84; } .m2-q.bad{ color:#ff5d73; }
+.m2-opts{ display:grid; grid-template-columns:1fr 1fr; gap:12px; width:100%; max-width:320px; }
+.m2-opt{ min-height:64px; font:800 26px var(--sans); border-radius:16px; cursor:pointer; color:var(--text); background:var(--panel-light); border:3px solid rgba(255,255,255,.18); touch-action:manipulation; }
+.m2-opt:active{ transform:scale(.95); }
+.m2-opt.ok{ background:#1f9d57; border-color:#7dffb2; } .m2-opt.ng{ background:#a02a3a; border-color:#ff8f9e; }
+
+/* ---------- スライド ---------- */
+.m2-slide{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; width:100%; max-width:300px; aspect-ratio:1; padding:10px; border-radius:18px; background:#120a22; border:1px solid var(--gold-line); }
+.m2-tile{ position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:14px; cursor:pointer; border:2px solid rgba(255,255,255,.22);
+  background:linear-gradient(160deg,#5a2fa0,#3a1c6c); color:#fff; touch-action:manipulation; }
+.m2-tile .e{ font-size:34px; line-height:1; } .m2-tile .n{ font:800 13px var(--sans); opacity:.9; }
+.m2-tile.right{ background:linear-gradient(160deg,#c46a12,#8a4a08); border-color:#ffd98a; }
+.m2-tile.blank{ background:transparent; border:2px dashed rgba(255,255,255,.12); cursor:default; }
+.m2-tile:active:not(.blank){ transform:scale(.94); }
+
+/* ---------- ライツアウト ---------- */
+.m2-lights{ display:grid; grid-template-columns:repeat(5,1fr); gap:6px; width:100%; max-width:320px; aspect-ratio:1; padding:10px; border-radius:18px; background:#120a22; border:1px solid var(--gold-line); }
+.m2-light{ border-radius:12px; cursor:pointer; font-size:26px; border:2px solid rgba(255,255,255,.12); background:#241640; touch-action:manipulation; }
+.m2-light span{ filter:grayscale(1) brightness(.5); transition:filter .15s; }
+.m2-light.on{ background:radial-gradient(circle,#ff9a3d,#a24a00); border-color:#ffd98a; box-shadow:0 0 16px rgba(255,150,40,.7); }
+.m2-light.on span{ filter:none; }
+
+/* ---------- ナンバータッチ ---------- */
+.m2-num{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; width:100%; max-width:320px; }
+.m2-n{ aspect-ratio:1; font:800 26px var(--sans); border-radius:14px; cursor:pointer; color:#fff; border:2px solid rgba(255,255,255,.3);
+  background:hsl(var(--h) 55% 38%); touch-action:manipulation; transition:transform .08s, opacity .2s; }
+.m2-n:active{ transform:scale(.92); } .m2-n.done{ opacity:.18; pointer-events:none; } .m2-n.ng{ background:#a02a3a; animation:hdShake .2s; }
+
+/* ---------- ストループ ---------- */
+.m2-word{ font:900 64px var(--sans); min-height:90px; display:flex; align-items:center; margin:6px 0 14px; text-shadow:0 3px 14px rgba(0,0,0,.5); background:rgba(255,255,255,.07); border-radius:18px; padding:0 28px; border:2px solid rgba(255,255,255,.1); }
+.m2-word.ng{ animation:hdShake .2s; }
+.m2-inks{ display:grid; grid-template-columns:1fr 1fr; gap:12px; width:100%; max-width:320px; }
+.m2-ink{ min-height:64px; font:900 20px var(--sans); color:#1b1030; border-radius:16px; cursor:pointer; border:3px solid rgba(255,255,255,.6); touch-action:manipulation; text-shadow:0 1px 0 rgba(255,255,255,.4); }
+.m2-ink:active{ transform:scale(.94); }
+
+/* ---------- ランキングの種類タブ(18本以上でも見分けやすく) ---------- */
+.mg-ranktabs{ padding-bottom:10px; }
+.mg-rtab{ min-width:80px; }
+
+
+/* =====================================================================
+   ▼ パート3のゲームのスタイル(旧 minigames3.css)
+   ===================================================================== */
+/* minigames.css(後半) — v3.9 の新ミニゲーム(m3-*)。基本の見た目は minigames.css の m2-* を使い回す */
+.m3-wrap{ width:100%; max-width:380px; display:flex; flex-direction:column; align-items:center; }
+.m3-bigtap{ width:100%; max-width:320px; min-height:240px; border-radius:26px; cursor:pointer; user-select:none; -webkit-user-select:none; touch-action:manipulation;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:#fff;
+  background:linear-gradient(160deg,#5b2a8c,#2a1050); border:3px solid rgba(255,255,255,.3); box-shadow:0 14px 40px rgba(0,0,0,.45); transition:transform .06s; }
+.m3-bigtap span{ font-size:80px; line-height:1; } .m3-bigtap small{ font:800 14px var(--sans); opacity:.85; }
+.m3-bigtap.hit{ transform:scale(.94); background:linear-gradient(160deg,#ff8a2b,#b34a00); }
+.m3-bigtap.hold{ min-height:180px; }
+.m3-clock{ font:800 56px var(--serif); color:var(--gold); letter-spacing:.04em; margin:2px 0 10px; font-variant-numeric:tabular-nums; }
+.m3-msg{ min-height:26px; margin:8px 0; font:800 15px var(--sans); color:var(--text); text-align:center; }
+.m3-track{ position:relative; width:100%; max-width:340px; height:64px; border-radius:14px; background:rgba(255,255,255,.08); border:1px solid var(--gold-line); margin:10px 0; overflow:hidden; touch-action:manipulation; }
+.m3-zone{ position:absolute; left:42%; width:16%; top:0; bottom:0; background:rgba(61,220,132,.28); border-left:2px solid #3ddc84; border-right:2px solid #3ddc84; }
+.m3-mark{ position:absolute; top:6px; bottom:6px; width:12px; margin-left:-6px; border-radius:6px; background:linear-gradient(180deg,#ffb347,#ff3d6e); box-shadow:0 0 14px rgba(255,120,80,.8); left:0; }
+.m3-stop{ width:100%; max-width:340px; min-height:56px; font-size:17px; }
+.m3-grid{ display:grid; gap:6px; width:100%; max-width:340px; aspect-ratio:1; }
+.m3-cell{ border-radius:12px; border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.07); cursor:pointer; padding:0; color:inherit; touch-action:manipulation; }
+.m3-cell.ok{ background:rgba(61,220,132,.35); } .m3-cell.ng{ background:rgba(255,61,110,.4); }
+.m3-card{ width:150px; height:150px; border-radius:26px; display:flex; align-items:center; justify-content:center; font-size:84px; margin:6px 0 10px;
+  background:rgba(255,255,255,.07); border:2px solid var(--gold-line); transition:background .1s; }
+.m3-card.num{ font:800 84px var(--serif); color:var(--gold); }
+.m3-card.ok{ background:rgba(61,220,132,.3); } .m3-card.ng{ background:rgba(255,61,110,.35); }
+.m3-two, .m3-three{ display:grid; gap:10px; width:100%; max-width:340px; }
+.m3-two{ grid-template-columns:1fr 1fr; } .m3-three{ grid-template-columns:repeat(3,1fr); }
+.m3-side{ min-height:84px; border-radius:18px; font-size:34px; cursor:pointer; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  background:linear-gradient(160deg,#4a2a7a,#2b1650); border:2px solid rgba(255,255,255,.25); touch-action:manipulation; }
+.m3-side small{ font:800 12px var(--sans); opacity:.9; }
+.m3-side.treat{ background:linear-gradient(160deg,#ff8a2b,#b34a00); }
+.m3-hand{ min-height:92px; border-radius:20px; font-size:48px; cursor:pointer; background:linear-gradient(160deg,#4a2a7a,#2b1650); border:2px solid rgba(255,255,255,.25); touch-action:manipulation; }
+.m3-hand:active{ transform:scale(.94); }
+.m3-field{ position:relative; width:100%; max-width:340px; height:230px; border-radius:16px; background:#120a22; border:1px solid var(--gold-line); overflow:hidden; margin-bottom:6px; }
+.m3-pump{ position:absolute; font-size:30px; line-height:1; }
+.m3-q{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:80px; }
+
+
+/* =====================================================================
+   ▼ パート4のゲームのスタイル(旧 minigames4.css)
+   ===================================================================== */
+/* minigames.css(後半) — v4.0 の新ミニゲーム(m4-*)。基本の見た目は minigames.css / minigames3.css を使い回す */
+.m4-field{ position:relative; width:100%; max-width:340px; border-radius:16px; overflow:hidden; background:linear-gradient(180deg,#120a22,#2a1050); border:1px solid var(--gold-line); touch-action:manipulation; user-select:none; -webkit-user-select:none; margin-bottom:6px; transition:box-shadow .15s; }
+.m4-field.hurt{ box-shadow:inset 0 0 40px rgba(255,61,110,.8); }
+.m4-laneline{ position:absolute; top:0; bottom:0; width:1px; background:rgba(255,255,255,.12); }
+.m4-me{ position:absolute; bottom:12px; font-size:44px; line-height:1; transform:translateX(-50%); transition:left .08s ease-out; filter:drop-shadow(0 0 10px rgba(255,140,40,.7)); }
+.m4-bat{ position:absolute; font-size:34px; line-height:1; transform:translateX(-50%); }
+.m4-rhythm{ margin:0 auto 8px; }
+.m4-hitline{ position:absolute; left:0; right:0; height:3px; margin-top:-1px; background:linear-gradient(90deg,transparent,#ffb347,transparent); box-shadow:0 0 14px rgba(255,180,70,.9); }
+.m4-note{ position:absolute; font-size:34px; line-height:1; transform:translate(-50%,-50%); }
+.m4-pads{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; width:100%; max-width:340px; margin:0 auto; }
+.m4-pad{ min-height:64px; border-radius:14px; cursor:pointer; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; touch-action:manipulation;
+  background:linear-gradient(160deg,#4a2a7a,#2b1650); border:2px solid rgba(255,255,255,.25); }
+.m4-pad span{ font-size:26px; line-height:1; } .m4-pad small{ font:800 11px var(--sans); opacity:.7; }
+.m4-pad.hit{ background:linear-gradient(160deg,#ff8a2b,#b34a00); transform:scale(.94); }
+.m3-cell.m4-lit{ background:rgba(255,190,70,.45); box-shadow:0 0 18px rgba(255,190,70,.8); }
+.m3-cell{ font-size:28px; transition:background .12s, opacity .12s; }
+.m4-pumpbox{ display:flex; align-items:center; justify-content:center; width:100%; max-width:340px; height:210px; margin:4px 0; overflow:hidden; }
+.m4-pump{ font-size:110px; line-height:1; transform:scale(.6); transition:transform .12s ease-out; filter:drop-shadow(0 0 16px rgba(255,140,40,.6)); }
+.m4-slots{ display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin:6px 0 12px; min-height:48px; }
+.m4-slot{ width:44px; height:48px; border-radius:10px; border:2px dashed var(--gold-line); display:flex; align-items:center; justify-content:center; font:800 24px var(--sans); color:var(--gold); }
+.m4-slot.on{ border-style:solid; background:rgba(61,220,132,.22); }
+.m4-tiles{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px; max-width:340px; margin-bottom:8px; }
+.m4-tile{ width:52px; height:56px; border-radius:12px; font:800 24px var(--sans); color:#fff; cursor:pointer; touch-action:manipulation;
+  background:linear-gradient(160deg,#4a2a7a,#2b1650); border:2px solid rgba(255,255,255,.25); }
+.m4-tile.used{ opacity:.25; } .m4-tile.shake{ animation:m4shake .3s; }
+@keyframes m4shake{ 0%,100%{ transform:translateX(0); } 25%{ transform:translateX(-6px); } 75%{ transform:translateX(6px); } }
