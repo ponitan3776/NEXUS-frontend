@@ -1,0 +1,135 @@
+/* =====================================================================
+   ✨ アニメーション (v3.2) — 最後に読み込む
+   ・画面の切り替え / ボタン / ウィンドウ / リスト / 数字 / ゲーム中 すべてに動きを付ける
+   ・「設定 > 動きを減らす」か、端末の「視差効果を減らす」で、まとめて止まる(theme.css 側)
+   ===================================================================== */
+
+:root{
+  --spring: cubic-bezier(.34,1.56,.64,1);   /* ぽよん、と弾む動き */
+  --out: cubic-bezier(.2,.8,.2,1);          /* すっと止まる動き */
+}
+
+/* ---------- 共通キーフレーム ---------- */
+@keyframes fadeIn{ from{ opacity:0; } to{ opacity:1; } }
+@keyframes fadeOut{ from{ opacity:1; } to{ opacity:0; } }
+@keyframes riseIn{ from{ opacity:0; transform:translateY(18px); } to{ opacity:1; transform:none; } }
+@keyframes itemIn{ from{ opacity:0; transform:translateY(12px) scale(.98); } to{ opacity:1; transform:none; } }
+@keyframes popBounce{ 0%{ opacity:0; transform:scale(.7) translateY(20px); } 55%{ opacity:1; transform:scale(1.04); } 100%{ transform:none; } }
+@keyframes sheetDown{ from{ transform:none; opacity:1; } to{ transform:translateY(60px); opacity:0; } }
+@keyframes tabIn{ from{ opacity:0; transform:translateX(14px); } to{ opacity:1; transform:none; } }
+@keyframes bump{ 0%{ transform:scale(1); } 35%{ transform:scale(1.22); filter:brightness(1.35); } 100%{ transform:scale(1); } }
+@keyframes ringOut{ from{ opacity:.55; transform:translate(-50%,-50%) scale(.2); } to{ opacity:0; transform:translate(-50%,-50%) scale(2.6); } }
+@keyframes barGrow{ from{ transform:scaleX(0); } to{ transform:scaleX(1); } }
+@keyframes barShine{ 0%{ background-position:-120% 0; } 100%{ background-position:220% 0; } }
+@keyframes lobbyIn{ from{ opacity:0; transform:translateY(26px) scale(.97); } to{ opacity:1; transform:none; } }
+@keyframes titleOut{ from{ opacity:1; transform:none; } to{ opacity:0; transform:scale(1.04); } }
+@keyframes appIn{ from{ opacity:0; transform:translateY(14px) scale(.985); } to{ opacity:1; transform:none; } }
+@keyframes modeIn{ from{ opacity:0; transform:translateY(16px) scale(.97); } to{ opacity:1; transform:none; } }
+@keyframes logoFloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-5px); } }
+@keyframes playPulse{ 0%,100%{ box-shadow:0 14px 38px color-mix(in srgb, var(--coral) 34%, transparent), inset 0 1px 0 rgba(255,255,255,.6); } 50%{ box-shadow:0 16px 54px color-mix(in srgb, var(--gold) 55%, transparent), inset 0 1px 0 rgba(255,255,255,.7); } }
+@keyframes hdShake{ 0%{ transform:translateY(0); } 30%{ transform:translateY(5px); } 65%{ transform:translateY(-1px); } 100%{ transform:translateY(0); } }
+@keyframes winGlow{ 0%,100%{ text-shadow:0 0 0 transparent; } 50%{ text-shadow:0 0 14px var(--gold); } }
+@keyframes scorePop{ 0%{ opacity:0; transform:scale(.4); } 60%{ opacity:1; transform:scale(1.18); } 100%{ transform:scale(1); } }
+@keyframes badgePop{ 0%{ transform:scale(0); } 70%{ transform:scale(1.3); } 100%{ transform:scale(1); } }
+@keyframes dotPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(255,80,80,.6); } 50%{ box-shadow:0 0 0 6px rgba(255,80,80,0); } }
+
+/* ---------- タップ: 押し込み → ぽよんと戻る + 波紋 ---------- */
+:is(button, .icon-btn, .pill-btn, .tab-btn, .mode-card, .claim-btn, .primary-btn, .ghost-btn, .lobby-tile, .lobby-wide, .lobby-chip, .lobby-icon, .lobby-event, .lobby-play, header .title, .other-game-item){
+  transition:transform .28s var(--spring), border-color .2s, background .2s, box-shadow .2s, filter .2s, opacity .2s;
+  -webkit-user-select:none; user-select:none;
+}
+:is(button, .icon-btn, .pill-btn, .tab-btn, .mode-card, .claim-btn, .primary-btn, .ghost-btn, .lobby-tile, .lobby-wide, .lobby-chip, .lobby-icon, .lobby-event, .lobby-play, header .title, .other-game-item):active{
+  transform:scale(.95); transition-duration:.08s;
+}
+:is(button, .claim-btn, .primary-btn):disabled:active{ transform:none; }
+@media (hover:hover){
+  :is(.icon-btn, .pill-btn, .lobby-tile, .lobby-wide, .claim-btn, .mode-card):hover{ transform:translateY(-2px); }
+  .primary-btn:not(:disabled):hover, .lobby-play:hover{ filter:brightness(1.06); }
+}
+.tap-ring{ position:fixed; z-index:99999; width:54px; height:54px; border-radius:50%; pointer-events:none;
+  border:2px solid var(--gold); background:radial-gradient(circle, color-mix(in srgb, var(--gold) 35%, transparent), transparent 70%);
+  animation:ringOut .5s var(--out) forwards; }
+
+/* ---------- 画面の切り替え ---------- */
+/* ロビーが出る/消える */
+#titleScreen.leaving{ animation:titleOut .26s var(--out) forwards; pointer-events:none; }
+#titleScreen.lobby-in .lobby > :not(.lobby-grid):not(.lobby-quick){ animation:lobbyIn .6s var(--out) both; }
+#titleScreen.lobby-in .lobby > :nth-child(1){ animation-delay:.02s; }
+#titleScreen.lobby-in .lobby > :nth-child(2){ animation-delay:.08s; }
+#titleScreen.lobby-in .lobby > :nth-child(3){ animation-delay:.14s; }
+#titleScreen.lobby-in .lobby > :nth-child(4){ animation-delay:.2s; }
+#titleScreen.lobby-in .lobby > :nth-child(5){ animation-delay:.26s; }
+#titleScreen.lobby-in .lobby-quick .lobby-wide{ animation:lobbyIn .55s var(--out) both; }
+#titleScreen.lobby-in .lobby-quick .lobby-wide:nth-child(1){ animation-delay:.32s; }
+#titleScreen.lobby-in .lobby-quick .lobby-wide:nth-child(2){ animation-delay:.38s; }
+#titleScreen.lobby-in .lobby-grid .lobby-tile{ animation:lobbyIn .55s var(--out) both; }
+#titleScreen.lobby-in .lobby-grid .lobby-tile:nth-child(1){ animation-delay:.44s; }
+#titleScreen.lobby-in .lobby-grid .lobby-tile:nth-child(2){ animation-delay:.5s; }
+#titleScreen.lobby-in .lobby-grid .lobby-tile:nth-child(3){ animation-delay:.56s; }
+#titleScreen.lobby-in .lobby-grid .lobby-tile:nth-child(4){ animation-delay:.62s; }
+/* 常時ゆらゆら */
+.lobby-hero .title-logo, .lobby-hero .title-logo-img{ animation:logoFloat 5.5s ease-in-out infinite; }
+.lobby-play{ animation:playPulse 3.2s ease-in-out infinite; }
+/* ゲーム画面が現れる(ロビーからゲームへ) */
+#app.app-enter{ animation:appIn .5s var(--out) both; }
+/* モード切り替え(キャンディ ⇄ テトリス): 表示された瞬間に下から浮かぶ */
+#board-wrap, #tray, #tetris-wrap{ animation:modeIn .45s var(--out) both; }
+#tray{ animation-delay:.06s; }
+
+/* ---------- ウィンドウ ---------- */
+#modalOverlay.show, #overlay.show, #quickSheetWrap.show, #changelogPanel.show{ animation:fadeIn .22s ease-out both; }
+#modalOverlay.closing, #quickSheetWrap.closing, #changelogPanel.closing{ animation:fadeOut .2s ease-in forwards; pointer-events:none; }
+#modalOverlay.closing .panel-box, #quickSheetWrap.closing #quickSheet, #changelogPanel.closing .cl-sheet{ animation:sheetDown .2s ease-in forwards; }
+#overlay.show .panel-box{ animation:popBounce .55s var(--out) both; }
+#overlay.show .final-score{ animation:scorePop .7s .2s var(--spring) both; }
+#overlay.show .panel-box > *:not(.final-score):not(h2){ animation:riseIn .45s var(--out) both; }
+#overlay.show .panel-box > :nth-child(3){ animation-delay:.3s; } #overlay.show .panel-box > :nth-child(4){ animation-delay:.36s; }
+#overlay.show .panel-box > :nth-child(5){ animation-delay:.42s; } #overlay.show .panel-box > :nth-child(6){ animation-delay:.48s; }
+#overlay.show .panel-box > :nth-child(7){ animation-delay:.54s; }
+/* ☰シートの項目が順番に弾む */
+#quickSheetWrap.show .qs-grid .icon-btn{ animation:itemIn .42s var(--spring) both; }
+#quickSheetWrap.show .qs-grid .icon-btn:nth-child(1){ animation-delay:.04s; } #quickSheetWrap.show .qs-grid .icon-btn:nth-child(2){ animation-delay:.08s; }
+#quickSheetWrap.show .qs-grid .icon-btn:nth-child(3){ animation-delay:.12s; } #quickSheetWrap.show .qs-grid .icon-btn:nth-child(4){ animation-delay:.16s; }
+#quickSheetWrap.show .qs-grid .icon-btn:nth-child(5){ animation-delay:.2s; }  #quickSheetWrap.show .qs-grid .icon-btn:nth-child(6){ animation-delay:.24s; }
+#quickSheetWrap.show .qs-grid .icon-btn:nth-child(7){ animation-delay:.28s; } #quickSheetWrap.show .qs-grid .icon-btn:nth-child(8){ animation-delay:.32s; }
+
+/* ウィンドウ内の項目が順番に現れる(再描画が頻繁な 友達/チャット/ランキング/音楽 などは除外) */
+#modalContent:is([data-mode="gacha"],[data-mode="battlepass"],[data-mode="halloween"],[data-mode="othergames"],[data-mode="appsettings"],
+  [data-mode="records"],[data-mode="quests"],[data-mode="weeklychallenge"],[data-mode="settings"],[data-mode="events"],[data-mode="history"])
+  :is(.quest-item,.mode-card,.record-box,.achievement-item,.settings-row,.hw-card,.hw-mission,.hw-road-row,.hw-gcard,.hw-banner,.empty-hint,.skin-swatches,.size-row){
+  animation:itemIn .42s var(--out) both;
+}
+#modalContent :is(.quest-item,.mode-card,.record-box,.achievement-item,.settings-row,.hw-card,.hw-mission,.hw-road-row,.hw-gcard):nth-child(2){ animation-delay:.04s; }
+#modalContent :is(.quest-item,.mode-card,.record-box,.achievement-item,.settings-row,.hw-card,.hw-mission,.hw-road-row,.hw-gcard):nth-child(3){ animation-delay:.08s; }
+#modalContent :is(.quest-item,.mode-card,.record-box,.achievement-item,.settings-row,.hw-card,.hw-mission,.hw-road-row,.hw-gcard):nth-child(4){ animation-delay:.12s; }
+#modalContent :is(.quest-item,.mode-card,.record-box,.achievement-item,.settings-row,.hw-card,.hw-mission,.hw-road-row,.hw-gcard):nth-child(5){ animation-delay:.16s; }
+#modalContent :is(.quest-item,.mode-card,.record-box,.achievement-item,.settings-row,.hw-card,.hw-mission,.hw-road-row,.hw-gcard):nth-child(6){ animation-delay:.2s; }
+#modalContent :is(.quest-item,.mode-card,.record-box,.achievement-item,.settings-row,.hw-card,.hw-mission,.hw-road-row,.hw-gcard):nth-child(7){ animation-delay:.24s; }
+#modalContent :is(.quest-item,.mode-card,.record-box,.achievement-item,.settings-row,.hw-card,.hw-mission,.hw-road-row,.hw-gcard):nth-child(8){ animation-delay:.28s; }
+#modalContent :is(.quest-item,.mode-card,.record-box,.achievement-item,.settings-row,.hw-card,.hw-mission,.hw-road-row,.hw-gcard):nth-child(n+9){ animation-delay:.32s; }
+/* タブを切り替えたとき */
+#modalContent.tab-swap > :not(h2):not(.tab-row):not(.hw-head):not(.hw-h2){ animation:tabIn .32s var(--out) both; }
+#modalContent.tab-swap #hwBody > *{ animation:none; }
+
+/* ---------- ゲージ・数字 ---------- */
+.quest-bar-fill{ transform-origin:left center; animation:barGrow .9s var(--out) both;
+  background-size:200% 100%; }
+.quest-bar-fill::after{ content:''; display:block; height:100%; width:100%;
+  background:linear-gradient(100deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%); background-size:200% 100%; animation:barShine 2.4s ease-in-out infinite; }
+.bump{ animation:bump .34s var(--spring); }
+.unread-dot.show, #menuDot.show{ animation:dotPulse 1.8s ease-in-out infinite; }
+.mention-badge{ animation:badgePop .3s var(--spring) both; }
+.swatch{ transition:transform .2s var(--spring); } .swatch:hover{ transform:scale(1.25); }
+.switch-slider::before{ transition:transform .25s var(--spring), left .25s var(--spring); }
+
+/* ---------- ゲーム中 ---------- */
+#tetrisBoard.hd-shake{ animation:hdShake .16s ease-out; }
+.hw-res-row{ animation:itemIn .38s var(--out) both; }
+.hw-res-row:nth-child(2){ animation-delay:.05s; } .hw-res-row:nth-child(3){ animation-delay:.1s; } .hw-res-row:nth-child(4){ animation-delay:.15s; }
+.hw-res-row:nth-child(5){ animation-delay:.2s; } .hw-res-row:nth-child(6){ animation-delay:.25s; } .hw-res-row:nth-child(7){ animation-delay:.3s; }
+.hw-res-row:nth-child(8){ animation-delay:.35s; } .hw-res-row:nth-child(9){ animation-delay:.4s; } .hw-res-row:nth-child(10){ animation-delay:.45s; } .hw-res-row:nth-child(n+11){ animation-delay:.5s; }
+.hw-res-row.win{ animation:itemIn .38s var(--out) both, winGlow 1.2s ease-in-out .5s 3; }
+#gachaResultArea .quest-item{ animation:popBounce .5s var(--out) both; }
+.event-toast{ animation:toastIn .35s var(--spring); }
+.tetris-vs-score b, .tetris-info b{ display:inline-block; }
+.mode-card.selected{ animation:bump .34s var(--spring); }
