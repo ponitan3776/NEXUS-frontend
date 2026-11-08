@@ -1,0 +1,90 @@
+/* =====================================================================
+   🎁 ギフト開封 (v3.4)  重なり順: ガチャ演出(680) < ギフト(690) < 更新履歴(700)
+   ===================================================================== */
+.gx{
+  position:fixed; inset:0; z-index:690; display:none; align-items:center; justify-content:center; overflow:hidden;
+  --gw1:#e0245a; --gw2:#8a1038; --rib:#ffd36b;
+  animation:fadeIn .3s ease-out both;
+}
+.gx.show{ display:flex; }
+.gx.closing{ animation:fadeOut .25s ease-in forwards; pointer-events:none; }
+.gx-bg{ position:absolute; inset:0; background:
+  radial-gradient(ellipse at 50% 85%, rgba(255,110,150,.38), transparent 60%),
+  radial-gradient(circle at 50% 22%, #2d1456 0%, #0a0516 75%); }
+.gx-rays{ position:absolute; left:50%; top:46%; width:160vmax; height:160vmax; margin:-80vmax 0 0 -80vmax; opacity:0; pointer-events:none;
+  background:repeating-conic-gradient(from 0deg, rgba(255,226,150,.2) 0 7deg, transparent 7deg 18deg);
+  -webkit-mask:radial-gradient(circle, #000 0, transparent 52%); mask:radial-gradient(circle, #000 0, transparent 52%); }
+.gx.opened .gx-rays{ opacity:1; animation:raysSpin 16s linear infinite, fadeIn .6s ease-out both; }
+.gx-flash{ position:absolute; inset:0; z-index:8; background:#fff; opacity:0; pointer-events:none; }
+.gx-flash.go{ animation:gfxFlash .7s ease-out; }
+
+.gx-stage{ position:relative; z-index:4; width:100%; max-width:420px; min-height:470px; padding:0 18px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.gx-head{ min-height:54px; text-align:center; font:800 19px var(--serif); letter-spacing:.06em; color:#fff; text-shadow:0 2px 14px rgba(255,120,160,.6); animation:capPop .4s var(--spring) both; }
+.gx-head small{ display:block; margin-top:5px; font:700 12px var(--sans); letter-spacing:.04em; color:var(--text-dim); text-shadow:none; }
+
+/* ---------- プレゼントボックス ---------- */
+.gx-box{ position:relative; width:180px; height:160px; margin:12px 0 26px; }
+.gb-glow{ position:absolute; left:50%; bottom:30px; width:320px; height:320px; margin-left:-160px; border-radius:50%; pointer-events:none;
+  background:radial-gradient(circle, rgba(255,150,190,.6), transparent 65%); opacity:.3; animation:glowPulse 2.4s ease-in-out infinite; }
+.gx-box.open .gb-glow{ opacity:1; transform:scale(1.5); transition:all .5s var(--out); }
+.gb-body{ position:absolute; left:0; right:0; bottom:0; height:104px; border-radius:8px;
+  background:linear-gradient(135deg, var(--gw1), var(--gw2)); box-shadow:0 16px 34px rgba(0,0,0,.55), inset 0 3px 0 rgba(255,255,255,.22); }
+.gb-body::before{ content:''; position:absolute; left:50%; top:0; bottom:0; width:28px; margin-left:-14px; background:linear-gradient(90deg, #d99a22, var(--rib), #d99a22); }
+.gb-lid{ position:absolute; left:-9px; right:-9px; bottom:96px; height:46px; border-radius:8px; transform-origin:50% 100%;
+  background:linear-gradient(135deg, var(--gw1), var(--gw2)); box-shadow:inset 0 3px 0 rgba(255,255,255,.28), 0 8px 16px rgba(0,0,0,.4);
+  transition:transform .8s cubic-bezier(.3,1.3,.5,1), opacity .55s; }
+.gb-lid::before{ content:''; position:absolute; left:50%; top:0; bottom:0; width:28px; margin-left:-14px; background:linear-gradient(90deg, #d99a22, var(--rib), #d99a22); }
+.gb-bow{ position:absolute; left:50%; top:-26px; width:0; height:0; }
+.gb-bow::before, .gb-bow::after{ content:''; position:absolute; top:0; width:38px; height:30px; border:7px solid var(--rib); border-radius:50% 50% 50% 8px; background:transparent; box-shadow:0 3px 8px rgba(0,0,0,.35); }
+.gb-bow::before{ left:-42px; transform:rotate(-18deg); }
+.gb-bow::after{ left:4px; transform:scaleX(-1) rotate(-18deg); }
+.gx-box.open .gb-lid{ transform:translateY(-130px) rotate(-24deg); opacity:0; }
+.gx-box.gone{ transform:translateY(40px) scale(.55); opacity:0; transition:transform .7s ease-in, opacity .6s ease-in; }
+.gx-box.drop{ animation:chestDrop .95s cubic-bezier(.3,.7,.4,1) both; }
+.gx-box.shake{ animation:chestShake .8s linear both; }
+
+/* ---------- 手紙 ---------- */
+.gx-letter{ position:absolute; left:50%; top:47%; width:min(88vw, 340px); z-index:6; pointer-events:none; opacity:0;
+  transform:translate(-50%,-50%) scale(.18) rotate(-9deg); transition:transform .9s var(--spring), opacity .45s; }
+.gx-letter.show{ opacity:1; transform:translate(-50%,-50%) scale(1) rotate(0); }
+.gx-letter.away{ display:none; }
+.gx-letter.away.reread{ display:block; opacity:1 !important; transform:translate(-50%,-50%) scale(1) rotate(0) !important; transition:none !important; z-index:20; pointer-events:auto; }
+.gl-paper{ position:relative; padding:34px 22px 22px; border-radius:6px 6px 12px 12px; color:#3a2410; text-align:center;
+  background:
+    repeating-linear-gradient(transparent 0 25px, rgba(150,110,60,.17) 25px 26px),
+    linear-gradient(180deg, #fff9e6, #f6e4b8);
+  border:1px solid #d6b878; box-shadow:0 26px 64px rgba(0,0,0,.6), inset 0 0 30px rgba(190,150,80,.25); }
+.gl-seal{ position:absolute; left:50%; top:-18px; width:42px; height:42px; margin-left:-21px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:22px; background:radial-gradient(circle at 35% 30%, #ff6a8a, #b01540); box-shadow:0 4px 10px rgba(0,0,0,.4); }
+.gl-title{ font:800 13px var(--serif); letter-spacing:.16em; color:#8a5a1a; margin-bottom:12px; }
+.gl-msg{ font:600 16px/1.9 var(--serif); color:#3a2410; word-break:break-word; min-height:60px; }
+.gl-from{ margin-top:14px; font:700 12px var(--serif); color:#8a5a1a; text-align:right; }
+.gx-mini{ position:absolute; top:max(14px, env(safe-area-inset-top)); left:14px; z-index:7; width:46px; height:46px; display:flex; align-items:center; justify-content:center;
+  font-size:24px; cursor:pointer; opacity:0; transform:scale(.3); pointer-events:none; border-radius:10px;
+  background:linear-gradient(160deg, #fff9e6, #f0d9a0); border:1px solid #d6b878; box-shadow:0 6px 16px rgba(0,0,0,.45); }
+.gx-mini.show{ opacity:1; transform:scale(1); pointer-events:auto; transition:transform .4s var(--spring), opacity .3s; }
+
+/* ---------- もらったアイテム ---------- */
+.gx-items{ width:100%; display:none; grid-template-columns:1fr 1fr; gap:10px; margin:6px 0 18px; }
+.gx-items.show{ display:grid; }
+.gi-card{ display:flex; flex-direction:column; align-items:center; gap:4px; padding:16px 8px 14px; border-radius:var(--r); text-align:center;
+  background:linear-gradient(160deg, rgba(255,255,255,.1), rgba(255,255,255,.03)); border:1px solid var(--gold-line); box-shadow:0 10px 26px rgba(0,0,0,.4), inset 0 0 22px var(--gold-soft);
+  animation:popBounce .5s var(--out) both; }
+.gi-ic{ font-size:32px; line-height:1; filter:drop-shadow(0 3px 8px rgba(0,0,0,.4)); }
+.gi-nm{ font:800 11px var(--sans); letter-spacing:.08em; color:var(--text-dim); }
+.gi-val{ font:800 24px var(--serif); color:var(--gold); font-variant-numeric:tabular-nums; }
+
+.gx-btns{ width:100%; margin-top:8px; min-height:52px; }
+.gx-btn{ width:100%; min-height:52px; cursor:pointer; font:800 16px var(--sans); letter-spacing:.06em; color:#2a1730; border:1px solid rgba(255,255,255,.45); border-radius:var(--r);
+  background:linear-gradient(135deg, var(--gold), var(--coral)); box-shadow:0 10px 28px rgba(255,140,60,.35), inset 0 1px 0 rgba(255,255,255,.55); }
+.gx-btn:disabled{ filter:grayscale(.6) brightness(.85); cursor:default; }
+
+.gx-spark{ position:absolute; left:50%; top:46%; width:9px; height:9px; z-index:9; pointer-events:none; border-radius:50%; animation:confFly 1.4s cubic-bezier(.2,.7,.3,1) forwards; }
+@media (max-height:640px){ .gx-stage{ min-height:0; } .gx-box{ transform:scale(.82); margin:0 0 10px; } }
+
+/* ✕ で閉じる・まとめて受け取り (v3.9) */
+.gx-x{ position:absolute; top:max(14px, env(safe-area-inset-top)); right:14px; z-index:8; width:44px; height:44px; border-radius:50%; font-size:20px; line-height:1;
+  color:#fff; background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.4); cursor:pointer; }
+.gx-x:active{ transform:scale(.92); }
+.gx-btns{ display:flex; flex-direction:column; gap:8px; }
+.gx-all{ min-height:46px; font-size:14px; color:var(--text, #fff); background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.4); }
