@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>NEXUS by vortx</title>
+<meta name="app-version" content="2026.11.04-1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&family=Shippori+Mincho+B1:wght@600;800&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0a0613">
+<meta name="description" content="NEXUS — パズル・テトリス・ミニゲーム・ウィンターパス(by vortx)">
+<meta property="og:title" content="NEXUS by vortx">
+<meta property="og:description" content="パズル・テトリス・ミニゲーム・ウィンターパス！">
+<meta property="og:image" content="icons/og-image.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="loading.css?v=4.3.0">
+<link rel="stylesheet" href="styles.css?v=4.3.0">
+<link rel="stylesheet" href="theme.css?v=4.3.0">
+<link rel="stylesheet" href="layout.css?v=4.3.0">
+<link rel="stylesheet" href="anim.css?v=4.3.0">
+<link rel="stylesheet" href="minigames.css?v=4.3.0">
+<link rel="stylesheet" href="minigames3.css?v=4.3.0">
+<link rel="stylesheet" href="minigames4.css?v=4.3.0">
+<link rel="stylesheet" href="raid.css?v=4.3.0">
+<link rel="stylesheet" href="gachafx.css?v=4.3.0">
+<link rel="stylesheet" href="gifts.css?v=4.3.0">
+<link rel="stylesheet" href="social.css?v=4.3.0">
+<link rel="stylesheet" href="titles.css?v=4.3.0">
+<link rel="stylesheet" href="chatui.css?v=4.3.0">
+<link rel="stylesheet" href="menumedia.css?v=4.3.0">
+<link rel="stylesheet" href="v43.css?v=4.3.0">
+</head>
+<body>
+<!-- ✨ ロード画面: ページを開いた瞬間に出て、準備ができたら消える(script.js の start() が CBLoading を操作する) -->
+<div id="bootLoader" role="status" aria-live="polite">
+  <div class="bl-aurora"></div>
+  <div class="bl-stars" id="blStars"></div>
+  <div class="bl-float" id="blFloat"></div>
+  <div class="bl-center">
+    <div class="bl-orb">
+      <div class="bl-ring"></div><div class="bl-ring r2"></div>
+      <div class="bl-sat"><span>🍭</span></div><div class="bl-sat s2"><span>⭐</span></div>
+      <div class="bl-core"><b id="blCore">🍬</b></div>
+    </div>
+    <img class="bl-logo-img" src="icons/logo.png" alt="NEXUS" onload="document.getElementById('bootLoader').classList.add('has-logo')" onerror="this.remove()">
+    <div class="bl-logo">NEXUS</div>
+    <div class="bl-sub">by vortx</div>
+    <div class="bl-bar"><i id="blFill"></i></div>
+    <div class="bl-pct" id="blPct">0%</div>
+    <div class="bl-status" id="blStatus">準備しています…</div>
+    <div class="bl-sub2" id="blSub"></div>
+    <div class="bl-tip" id="blTip"><b>TIPS</b><span id="blTipText"></span></div>
+  </div>
+</div>
+<script>
+/* ロード画面の制御(軽く、先に動かすため、ここに直接書いています)。 CBLoading.set(進み具合0-100, 文字) / CBLoading.done() */
+(function(){
+  var L = document.getElementById('bootLoader'); if(!L) return;
+  var $ = function(id){ return document.getElementById(id); };
+  var t0 = Date.now(), cur = 0, target = 6, finished = false, warned = false;
+  // ハロウィン期間(日本時間 10/17〜11/8 の目安)は、夜バージョンに
+  try{ var j = new Date(Date.now() + 9*3600*1000), md = (j.getUTCMonth()+1)*100 + j.getUTCDate();
+       if(j.getUTCFullYear() === 2026 && md >= 1017 && md < 1104){ L.classList.add('bl-hw'); $('blCore').textContent = '🎃'; } }catch(e){}
+  // 星とお菓子(位置はランダム)
+  var st = '', fl = '', candy = L.classList.contains('bl-hw') ? ['🎃','🍬','🦇','👻','🍭'] : ['🍬','🍭','🍩','🍪','⭐','🍫'];
+  for(var i=0;i<26;i++) st += '<i style="left:'+(Math.random()*100).toFixed(1)+'%;top:'+(Math.random()*100).toFixed(1)+'%;animation-delay:'+(Math.random()*3.2).toFixed(2)+'s;animation-duration:'+(2.4+Math.random()*2.4).toFixed(1)+'s"></i>';
+  for(var k=0;k<9;k++) fl += '<span style="left:'+(4+Math.random()*92).toFixed(1)+'%;font-size:'+(16+Math.random()*16).toFixed(0)+'px;animation-duration:'+(9+Math.random()*8).toFixed(1)+'s;animation-delay:'+(-Math.random()*12).toFixed(1)+'s;--dx:'+((Math.random()*80-40)).toFixed(0)+'px;--rot:'+((Math.random()*420-210)).toFixed(0)+'deg">'+candy[k%candy.length]+'</span>';
+  $('blStars').innerHTML = st; $('blFloat').innerHTML = fl;
+  // ヒント(2.8秒ごとに切り替え)
+  var tips = ['同じ色をそろえてブロックを消そう。連鎖(コンボ)するほど高得点!','ミニゲームを遊ぶと、コインとバトルパスのXPがもらえます','ガチャは10連だと一気に引けます。無料チケットが先に使われます','フレンドと「対決」して、スコアで勝負できます','毎日のクエストをこなして、コインを貯めよう','集めた「称号」は、名前の横に飾れます','投票では、みんなの意見がリアルタイムで見られます','ウィンターパスは、レベルが上がるほど必要XPが増えます。1000レベルまで特別報酬が続きます','ミニゲームは、★でお気に入り登録しておくと、すぐ遊べます'];
+  var ti = Math.floor(Math.random()*tips.length), tipEl = $('blTip');
+  function tip(){ $('blTipText').textContent = tips[ti % tips.length]; ti++; }
+  tip();
+  var tipTimer = setInterval(function(){ tipEl.classList.add('swap'); setTimeout(function(){ tip(); tipEl.classList.remove('swap'); }, 350); }, 2800);
+  // 進み具合: 目標に向かってなめらかに進む。待っている間も、ゆっくり(90%まで)進み続ける
+  var tick = setInterval(function(){
+    if(finished) return;
+    if(cur < target) cur += Math.max(0.6, (target - cur) * 0.18); else if(cur < 90) cur += 0.12;
+    cur = Math.min(cur, finished ? 100 : 96);
+    $('blFill').style.width = cur.toFixed(1) + '%'; $('blPct').textContent = Math.floor(cur) + '%';
+    var sec = Math.floor((Date.now() - t0) / 1000);
+    if(sec >= 4 && !warned){ warned = true; $('blStatus').classList.add('warn'); }
+    if(warned && !finished){ $('blStatus').textContent = 'サーバーを起こしています…'; $('blSub').textContent = '最初の1回だけ、最大1分ほどかかることがあります(' + sec + '秒)'; }
+  }, 120);
+  function hide(){
+    if(finished) return; finished = true; clearInterval(tick); clearInterval(tipTimer);
+    $('blFill').style.width = '100%'; $('blPct').textContent = '100%'; $('blStatus').classList.remove('warn');
+    $('blStatus').textContent = '準備完了!'; $('blSub').textContent = '';
+    setTimeout(function(){ L.classList.add('out'); setTimeout(function(){ if(L.parentNode) L.parentNode.removeChild(L); }, 900); }, 380);
+  }
+  window.CBLoading = {
+    set: function(p, text){ if(finished) return; if(p > target) target = p; if(text && !warned) $('blStatus').textContent = text; },
+    done: hide
+  };
+  setTimeout(hide, 30000);   // 何があっても30秒で消す(起動に失敗しても画面が固まらないように)
+})();
+</script>
+<div id="hwBg" aria-hidden="true"></div>
+<div id="titleScreen" class="title-screen lobby-in">
+  <div class="lobby">
+    <div class="lobby-top">
+      <button class="lobby-chip" id="lobbyAccount" type="button"><span class="lc-ic">👤</span><span class="lc-col"><span id="lobbyAccountName">ゲスト</span><small id="lobbyAccountTitle" class="lc-title"></small></span></button>
+      <div class="lobby-chip coin"><span class="lc-ic">🪙</span><b id="lobbyCoins">0</b></div>
+      <button class="lobby-icon gift" id="lobbyGiftBtn" type="button" aria-label="ギフト" style="display:none;">🎁<span class="lt-badge" id="lobbyGiftBadge"></span></button>
+      <button class="lobby-icon" id="lobbyMenuBtn" type="button" aria-label="すべてのメニュー">☰<span class="unread-dot" id="lobbyMenuDot"></span></button>
+    </div>
+
+    <button class="lobby-event" id="titleEventBtn" type="button" style="display:none;">
+      <img class="btn-icon" src="icons/halloween.png" alt="" onerror="this.remove()">
+      <span class="le-main">🎃 ハロウィン・ナイトフェス</span>
+      <small id="titleEventTimer"></small>
+      <span class="le-go">›</span>
+    </button>
+
+    <!-- 🎁 ゲスト=アカウント作成のお誘い / ログイン中=毎日ログインボーナス(engage.js が中身を入れる) -->
+    <button class="lobby-bonus" id="lobbyBonusBtn" type="button" hidden></button>
+    <!-- 🔔 未読チャット・未投票・運営からの返信などを並べる「お知らせバー」(admin.js が中身を入れる) -->
+    <div class="lobby-notify" id="lobbyNotify" hidden></div>
+
+    <div class="lobby-hero" id="titleCard">
+      <!-- メニューの画像/動画(1278×718)。icons/menu.mp4 か menu.webm か menu.jpg|png|webp を置くと表示される(menumedia.js)。無ければ枠ごと非表示 -->
+      <div class="hero-media" id="heroMedia" hidden aria-hidden="true"></div>
+      <!-- icons/logo.png を置くとテキストロゴの代わりに表示される(無ければ自動でテキストロゴ) -->
+      <img class="title-logo-img" src="icons/logo.png" alt="NEXUS" onload="document.getElementById('titleCard').classList.add('has-logo')" onerror="this.remove()">
+      <div class="title-logo">NEXUS</div>
+      <div class="title-sub">by vortx</div>
+    </div>
+
+    <button class="lobby-play" id="titleStartBtn" type="button"><span class="lp-main">▶ PLAY</span><span class="lp-sub">モードを選んで開始</span></button>
+
+    <div class="lobby-quick">
+      <button class="lobby-wide" id="titleTimeAttackBtn" type="button"><span class="lw-ic">⏱</span><span>タイムアタック</span></button>
+      <button class="lobby-wide" id="titleWeeklyBtn" type="button"><span class="lw-ic">🎲</span><span>週替わり</span></button>
+    </div>
+
+    <!-- v4.3: 1画面に収まるドック(よく使う8個 + すべて)。残りの機能は「すべて」(☰メニュー)から。元のボタンは動きのために隠して残しています -->
+    <div class="lobby-dock" id="lobbyDock">
+      <button class="dock-tile" type="button" data-proxy="titleMiniBtn"><span class="lt-new">NEW</span><span class="lt-ic">🕹</span><span class="lt-name">ミニゲーム</span></button>
+      <button class="dock-tile" type="button" data-proxy="titleBattlePassBtn"><span class="lt-badge" id="dockBpBadge"></span><span class="lt-ic">❄</span><span class="lt-name">ウィンターパス</span></button>
+      <button class="dock-tile" type="button" data-proxy="titleGachaBtn"><span class="lt-ic">🎰</span><span class="lt-name">ガチャ</span></button>
+      <button class="dock-tile" type="button" data-v43="achievements"><span class="lt-badge" id="dockAchBadge"></span><span class="lt-ic">🏆</span><span class="lt-name">実績</span></button>
+      <button class="dock-tile" type="button" data-v43="profile"><span class="lt-ic">👤</span><span class="lt-name">プロフィール</span></button>
+      <button class="dock-tile" type="button" data-proxy="rankingBtn"><span class="lt-ic">🏅</span><span class="lt-name">ランキング</span></button>
+      <button class="dock-tile" type="button" data-proxy="chatBtn"><span class="lt-badge" id="dockChatBadge"></span><span class="lt-ic">💬</span><span class="lt-name">チャット</span></button>
+      <button class="dock-tile more" type="button" data-v43="more"><span class="lt-ic">⋯</span><span class="lt-name">すべて</span></button>
+    </div>
+    <div class="lobby-legacy" aria-hidden="true">
+      <button id="titleMiniBtn" type="button"></button>
+      <button id="titleOtherGamesBtn" type="button"></button>
+      <button id="titleGachaBtn" type="button"></button>
+      <button id="titleBattlePassBtn" type="button"></button>
+      <button id="titleRecordsBtn" type="button"></button>
+      <button id="titleTitlesBtn" type="button"></button>
+      <button id="titlePollBtn" type="button"><span id="lobbyPollBadge"></span></button>
+      <span id="lobbyFriendsBadge"></span><span id="lobbyChatBadge"></span>
+    </div>
+
+    <div class="title-version-row">
+      <span>Ver. 4.3.0</span>
+      <button id="titleSettingsBtn" type="button">⚙ 設定</button>
+      <button id="titleChangelogBtn" type="button">📢 更新履歴</button>
+    </div>
+  </div>
+</div>
+
+<div id="versionBadge">Ver. 4.3.0</div>
+<div id="changelogPanel"></div>
+<div id="eventCountdownBadge" style="display:none;"><span id="eventCountdownText">⏰ --:--:--</span></div>
+
+<div id="app">
+  <header>
+    <div class="title-wrap">
+      <div class="title" id="backButton">‹ メニュー</div>
+      <div class="mode-badge" id="modeBadge"></div>
+    </div>
+    <div class="hd-actions">
+      <div class="pill-btn" id="questBtn">📋</div>
+      <div class="icon-btn" id="menuSheetBtn" aria-label="メニュー">☰<span class="unread-dot" id="menuDot"></span></div>
+    </div>
+  </header>
+
+  <!-- ☰ を押すと下から出る「すべてのメニュー」(ロビーのメニューと同じ区分)。上の検索欄で絞り込めます -->
+  <div id="quickSheetWrap">
+    <div id="quickSheet">
+      <div class="qs-handle"></div>
+      <div class="qs-title">MENU</div>
+      <input id="qsSearch" class="qs-search" type="search" placeholder="🔍 さがす(例: ガチャ / 投票)" autocomplete="off">
+      <div class="qs-body">
+        <div class="qs-sec"><div class="qs-sec-h">🎮 あそぶ</div><div class="qs-grid">
+          <div class="icon-btn lobby-only" data-proxy="titleStartBtn" data-label="PLAY">▶️</div>
+          <div class="icon-btn lobby-only" data-proxy="titleTimeAttackBtn" data-label="タイムアタック">⏱</div>
+          <div class="icon-btn lobby-only" data-proxy="titleWeeklyBtn" data-label="週替わり">🎲</div>
+          <div class="icon-btn" data-proxy="titleMiniBtn" data-label="ミニゲーム">🕹</div>
+          <div class="icon-btn" data-proxy="titleOtherGamesBtn" data-label="別のゲーム">🎮</div>
+          <div class="icon-btn" data-v43="favorites" data-label="お気に入り">💖</div>
+          <div class="icon-btn" data-v43="recent" data-label="最近遊んだ">🕘</div>
+          <div class="icon-btn" data-v43="random" data-label="ランダム">🎲</div>
+          <div class="icon-btn" data-v43="tutorial" data-label="あそびかた チュートリアル">📖</div>
+        </div></div>
+        <div class="qs-sec"><div class="qs-sec-h">🎁 あつめる</div><div class="qs-grid">
+          <div class="icon-btn" data-proxy="titleGachaBtn" data-label="ガチャ">🎰</div>
+          <div class="icon-btn" data-proxy="titleBattlePassBtn" data-label="バトルパス">🎫</div>
+          <div class="icon-btn ev-only" data-proxy="titleEventBtn" data-label="ハロウィン" style="display:none;">🎃</div>
+          <div class="icon-btn" data-proxy="questBtn" data-label="クエスト">📋</div>
+          <div class="icon-btn" data-v43="achievements" data-label="実績">🏆</div>
+          <div class="icon-btn" data-proxy="titleRecordsBtn" data-label="記録 プレイ記録">📜</div>
+          <div class="icon-btn" data-proxy="titleTitlesBtn" data-label="称号">🏷</div>
+          <div class="icon-btn" data-v43="profile" data-label="プロフィール">👤</div>
+          <div class="icon-btn" data-v43="collection" data-label="コレクション">📦</div>
+          <div class="icon-btn" data-v43="stats" data-label="統計 プレイ履歴 連続">📊</div>
+        </div></div>
+        <div class="qs-sec"><div class="qs-sec-h">👥 みんなと</div><div class="qs-grid">
+          <div class="icon-btn" id="friendsBtn" data-label="フレンド">
+            👥
+            <span class="unread-dot" id="friendsDot"></span>
+            <span class="mention-badge" id="friendsMentionBadge">0</span>
+          </div>
+          <div class="icon-btn" id="chatBtn" data-label="チャット">
+            💬
+            <span class="unread-dot" id="chatDot"></span>
+            <span class="mention-badge" id="chatMentionBadge">0</span>
+          </div>
+          <div class="icon-btn" id="rankingBtn" data-label="ランキング">🏅</div>
+          <div class="icon-btn" data-proxy="titlePollBtn" data-label="投票">🗳</div>
+          <div class="icon-btn" data-act="gift" data-label="ギフト">🎁</div>
+        </div></div>
+        <div class="qs-sec"><div class="qs-sec-h">⚙ せってい</div><div class="qs-grid">
+          <div class="icon-btn" id="settingsBtn" data-label="設定">⚙️</div>
+          <div class="icon-btn" data-v43="themes" data-label="テーマ 演出 勝利演出 レベルアップ">🎨</div>
+          <div class="icon-btn" data-v43="cloud" data-label="データ保存 バックアップ">💾</div>
+          <div class="icon-btn" id="soundBtn" data-label="サウンド">🔊</div>
+          <div class="icon-btn" id="musicBtn" data-label="BGM">🎵</div>
+          <div class="icon-btn" id="accountBtn" data-label="アカウント">👤</div>
+          <div class="icon-btn" data-proxy="titleChangelogBtn" data-label="更新履歴">📢</div>
+          <div class="icon-btn" id="adminPanelBtn" data-label="管理" style="display:none;">🔧</div>
+        </div></div>
+        <div class="qs-empty" style="display:none;">見つかりません。別のことばで試してみてください。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scoreboard">
+    <div class="score-card"><div class="label">score</div><div class="value" id="scoreVal">0</div></div>
+    <div class="score-card best"><div class="label">best</div><div class="value" id="bestVal">0</div></div>
+    <div class="score-card coins"><div class="label">🪙 coin</div><div class="value" id="coinVal">0</div></div>
+    <div class="score-card timer" id="timeAttackCard" style="display:none;"><div class="label">⏱ time</div><div class="value" id="timeAttackVal">0:60</div></div>
+  </div>
+
+  <div id="board-wrap">
+    <div id="board"></div>
+    <div class="combo-text" id="comboText"></div>
+  </div>
+
+  <div id="tray"></div>
+
+<div id="tetris-wrap">
+    <div class="tetris-vs-layout">
+      <div class="tetris-vs-side">
+        <div class="tetris-vs-label you">👤 あなた</div>
+        <div id="tetrisBoard"></div>
+        <div class="tetris-vs-score"><span>SCORE</span><b id="tetrisPlayerScore">0</b></div>
+      </div>
+      <div class="tetris-hud">
+        <div class="vs-badge">VS</div>
+        <div>
+          <div class="tetris-next-label">HOLD</div>
+          <div id="tetrisHoldBox"></div>
+        </div>
+        <div>
+          <div class="tetris-next-label">NEXT</div>
+          <div id="tetrisNext"></div>
+        </div>
+        <div class="tetris-info">
+          <div>LEVEL<b id="tetrisLevel">1</b></div>
+          <div>LINES<b id="tetrisLines">0</b></div>
+        </div>
+      </div>
+      <div class="tetris-vs-side" id="tetrisAiSide">
+        <div class="tetris-vs-label ai">🤖 AI</div>
+        <div id="tetrisAiBoard"></div>
+        <div class="tetris-vs-score"><span>SCORE</span><b id="tetrisAiScore">0</b></div>
+      </div>
+      <div class="combo-text" id="tetrisComboText"></div>
+    </div>
+    <div class="tetris-hud-bottom">
+      <div class="tetris-help-btn" id="tetrisHelpBtn">❓ 操作説明</div>
+      <div class="tetris-help-panel" id="tetrisHelpPanel"></div>
+    </div>
+    <div class="tetris-controls">
+      <div class="tetris-btn" id="tBtnLeft"><span class="tb-ic">◀</span></div>
+      <div class="tetris-btn" id="tBtnRight"><span class="tb-ic">▶</span></div>
+      <div class="tetris-btn rot" id="tBtnRotate"><span class="tb-ic">⟳</span><small>回転</small></div>
+      <div class="tetris-btn soft" id="tBtnSoft"><span class="tb-ic">▼</span><small>ソフト</small></div>
+      <div class="tetris-btn hard" id="tBtnHard"><span class="tb-ic">⤓</span><small>ハード</small></div>
+      <div class="tetris-btn hold" id="tBtnHold"><span class="tb-ic">⇄</span><small>HOLD</small></div>
+    </div>
+  </div>
+</div>
+
+<div id="ghost" style="display:none;"></div>
+
+<div id="overlay">
+  <div class="panel-box">
+    <h2>🔥 ゲームオーバー</h2>
+    <div class="final-score" id="finalScore">0</div>
+    <div class="sub" id="newBestNote">お疲れさまでした！</div>
+    <div class="sub" id="coinEarnedNote" style="color:var(--gold); font-weight:700;"></div>
+    <div class="sub" id="duelResultNote" style="color:var(--mint); font-weight:800; margin-top:6px;"></div>
+    <button class="primary-btn" id="restartBtn">もう一度</button>
+  </div>
+</div>
+
+<div id="modalOverlay">
+  <div class="panel-box" id="modalBox" style="position:relative;">
+    <button class="close-x" id="modalClose">×</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script src="config.js?v=4.3.0"></script>
+<script src="net.js?v=4.3.0"></script>
+<script src="script.js?v=4.3.0"></script>
+<script src="minigames.js?v=4.3.0"></script>
+<script src="minigames3.js?v=4.3.0"></script>
+<script src="minigames4.js?v=4.3.0"></script>
+<script src="menumedia.js?v=4.3.0"></script>
+<script src="gachafx.js?v=4.3.0"></script>
+<script src="gifts.js?v=4.3.0"></script>
+<script src="social.js?v=4.3.0"></script>
+<script src="titles.js?v=4.3.0"></script>
+<script src="admin.js?v=4.3.0"></script>
+<script src="v43.js?v=4.3.0"></script>
+<script src="v43bp.js?v=4.3.0"></script>
+<script src="v43ui.js?v=4.3.0"></script>
+<script src="bots.js?v=4.3.0"></script>
+<script src="bots2.js?v=4.3.0"></script>
+</body>
+</html>
