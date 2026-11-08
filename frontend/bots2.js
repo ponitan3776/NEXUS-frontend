@@ -159,28 +159,36 @@
     });
   };
 
-  /* ---------- アイスブロック崩し: ボールの落下点を読んで、ねらった向きに打ち返す ---------- */
+  /* ---------- アイスブロック崩し: いちばん早く落ちてくるボールを追い、余裕があるときはアイテムも拾う ---------- */
   BOTS.breakout = ({ spec, c, stage })=>{
-    const K = spec.k, cv = stage.querySelector('canvas');
-    let waited = 0;
+    const K = spec.k, cv = stage.querySelector('canvas'); let waited = 0;
+    // ボールがバーの高さに着く位置と、着くまでの時間(フレーム数)。壁での跳ね返りも考える
     function landing(b){
-      let x = b.x, y = b.y, vx = b.vx, vy = b.vy; if(vy <= 0) return null;
-      const t = (K.PY - K.BR - y) / vy; x += vx * t;
-      const W = K.W, w = W - 2 * K.BR; let xx = (x - K.BR) % (2 * w); if(xx < 0) xx += 2 * w; return K.BR + (xx > w ? 2 * w - xx : xx);
+      if(b.vy <= 0) return null;
+      const t = (K.PY - K.BR - b.y) / b.vy, w = K.W - 2 * K.BR; let xx = (b.x + b.vx * t - K.BR) % (2 * w); if(xx < 0) xx += 2 * w;
+      return { x: K.BR + (xx > w ? 2 * w - xx : xx), t };
     }
     c.frame(()=>{
       if(spec.over()) return;
-      const b = spec.ball();
-      if(!b.launched){ if(++waited > 20){ waited = 0; spec.launch(); } return; }
-      let lx = landing(b);
-      if(lx == null){ lx = K.W / 2; }
-      // 打ち返す向き: いちばん下に残っているブロックの列をねらう
+      const balls = spec.balls();
+      if(balls.some(b=> !b.launched)){ if(++waited > 20){ waited = 0; spec.launch(); } return; }
+      const lands = balls.map(b=> ({ b, l: landing(b) })).filter(o=> o.l).sort((p, q)=> p.l.t - q.l.t);
+      const pw = spec.pw(), cl = (x)=> clamp(x, pw / 2, K.W - pw / 2);
+      // 打ち返す向き: いちばん下に残っているブロックをねらう(ファイア中は、まっすぐ上でよい)
       const bricks = spec.bricks(); let tx = K.W / 2;
-      if(bricks.length){ const low = Math.max(...bricks.map(r=> r.y)); const row = bricks.filter(r=> r.y === low); const tgt = row[Math.floor(row.length / 2)]; tx = tgt.x + K.BW / 2; }
-      const dx = tx - lx; const rel = clamp(Math.atan2(dx, 330), -0.8, 0.8);
-      const px = clamp(lx - rel * (K.PW0 / 2), K.PW0 / 2, K.W - K.PW0 / 2);
-      if(b.vy > 0 || b.y > 250) pointAt(cv, px, K.W, 'pointermove');
-      else pointAt(cv, clamp(lx, K.PW0 / 2, K.W - K.PW0 / 2), K.W, 'pointermove');
+      if(bricks.length){ const low = Math.max(...bricks.map(r=> r.y)); const row = bricks.filter(r=> r.y === low); tx = row[Math.floor(row.length / 2)].x + K.BW / 2; }
+      let target = null, urgentT = 1e9;
+      if(lands.length){
+        const o = lands[0]; urgentT = o.l.t;
+        const rel = clamp(Math.atan2(tx - o.l.x, 330), -0.8, 0.8);
+        target = cl(o.l.x - rel * (pw / 2) * 0.9);
+      }
+      // アイテム: ボールが着くより十分早く、バーのところに落ちてくるなら、先に拾いに行く
+      const drops = spec.drops(); let best = null, bt = 1e9;
+      for(const d of drops){ const t = (K.PY - d.y) / d.vy; if(t > -2 && t < bt && t < urgentT - 10){ bt = t; best = d; } }
+      if(best && (target === null || bt < urgentT - 10)) target = cl(best.x);
+      if(target === null){ const hi = balls.length ? balls[0].x : K.W / 2; target = cl(hi); }
+      pointAt(cv, target, K.W, 'pointermove');
     });
   };
 
