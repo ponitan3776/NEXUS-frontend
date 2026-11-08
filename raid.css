@@ -1,0 +1,22 @@
+/* raid.css — v4.0 みんなでボス討伐(rd-*)。基本の見た目はハロウィンの hw2-* を使い回す */
+.rd-card{ text-align:center; }
+.rd-stage{ position:relative; height:150px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.rd-boss{ font-size:104px; line-height:1; filter:drop-shadow(0 0 18px rgba(255,120,40,.55)); animation:rdfloat 3s ease-in-out infinite; }
+.rd-boss.hit{ animation:rdhit .45s; }
+.rd-card.cleared .rd-boss{ animation:none; }
+@keyframes rdfloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-8px); } }
+@keyframes rdhit{ 0%{ transform:translateX(0) scale(1); filter:brightness(2) drop-shadow(0 0 24px #ff3d6e); } 25%{ transform:translateX(-10px) scale(.94); } 50%{ transform:translateX(10px) scale(.97); } 100%{ transform:translateX(0) scale(1); } }
+.rd-fx{ position:absolute; inset:0; pointer-events:none; }
+.rd-dmg{ position:absolute; bottom:30%; font:800 20px var(--serif); color:#fff; text-shadow:0 2px 6px #000,0 0 10px #ff8a2b; animation:rdup 1s ease-out forwards; white-space:nowrap; }
+.rd-dmg.crit{ color:#ffd84a; font-size:26px; }
+@keyframes rdup{ from{ transform:translateY(0); opacity:1; } to{ transform:translateY(-70px); opacity:0; } }
+.rd-name{ font:800 18px var(--serif); color:var(--gold); }
+.rd-story{ font-size:12px; color:var(--text-dim); margin:2px 0 8px; }
+.rd-hp{ height:14px; }
+.rd-hp .quest-bar-fill{ background:linear-gradient(90deg,#ff3d6e,#ff8a2b); transition:width .6s; }
+.rd-hptext{ margin-top:4px; }
+.rd-btns{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+.rd-atk{ min-height:48px; font-size:14px; }
+.rd-rank{ display:flex; align-items:center; gap:8px; padding:5px 2px; border-bottom:1px solid rgba(255,255,255,.07); text-align:left; }
+.rd-rank > span:first-child{ width:30px; text-align:center; }
+.rd-rn{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
