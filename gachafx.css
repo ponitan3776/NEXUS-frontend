@@ -1,0 +1,152 @@
+/* =====================================================================
+   🎁 ガチャ演出 (v3.3)  重なり順: ウィンドウ(650) < ガチャ演出(680) < 更新履歴(700)
+   宝箱はCSSの3D(画像なし)。ハロウィンは紫×オレンジ、通常は茶×金。
+   ===================================================================== */
+.gfx{
+  position:fixed; inset:0; z-index:680; display:none; align-items:center; justify-content:center; overflow:hidden;
+  --acc:#ffd36b; --acc2:#ff8a1f; --glow:rgba(255,200,80,.55);
+  animation:fadeIn .25s ease-out both;
+}
+.gfx.show{ display:flex; }
+.gfx.closing{ animation:fadeOut .25s ease-in forwards; pointer-events:none; }
+.gfx.kind-halloween{ --acc:#ff9a2e; --acc2:#b14dff; --glow:rgba(255,130,30,.55); }
+.gfx-bg{ position:absolute; inset:0; background:
+  radial-gradient(ellipse at 50% 85%, var(--glow), transparent 55%),
+  radial-gradient(circle at 50% 30%, #2a1450 0%, #0b0618 70%); }
+.gfx.kind-halloween .gfx-bg{ background:
+  radial-gradient(ellipse at 50% 85%, rgba(255,120,20,.5), transparent 55%),
+  radial-gradient(circle at 50% 30%, #3a1458 0%, #0a0414 72%); }
+.gfx-rays{ position:absolute; left:50%; top:62%; width:160vmax; height:160vmax; margin:-80vmax 0 0 -80vmax; opacity:0; pointer-events:none;
+  background:repeating-conic-gradient(from 0deg, rgba(255,230,150,.22) 0 7deg, transparent 7deg 18deg);
+  -webkit-mask:radial-gradient(circle, #000 0, transparent 55%); mask:radial-gradient(circle, #000 0, transparent 55%); }
+.gfx.opened .gfx-rays{ opacity:1; animation:raysSpin 14s linear infinite, fadeIn .6s ease-out both; }
+@keyframes raysSpin{ to{ transform:rotate(360deg); } }
+.gfx-flash{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:6; }
+.gfx-flash.go{ animation:gfxFlash .7s ease-out; }
+@keyframes gfxFlash{ 0%{ opacity:.85; } 100%{ opacity:0; } }
+
+.gfx-skip{ position:absolute; top:max(14px, env(safe-area-inset-top)); right:14px; z-index:8; opacity:0; pointer-events:none; cursor:pointer;
+  padding:8px 14px; font:800 12px var(--sans); letter-spacing:.06em; color:#fff; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.3); border-radius:var(--r); }
+.gfx-skip.show{ opacity:1; pointer-events:auto; transition:opacity .3s; }
+
+/* ---------- ステージ ---------- */
+.gfx-stage{ position:relative; z-index:3; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0 10px; }
+.gfx-caption{ margin-top:30px; min-height:28px; font:800 17px var(--serif); letter-spacing:.08em; color:#fff; text-shadow:0 2px 12px var(--glow); text-align:center; }
+.gfx-caption.pop{ animation:capPop .35s var(--spring); }
+@keyframes capPop{ from{ transform:scale(.7); opacity:0; } to{ transform:none; opacity:1; } }
+
+/* ---------- 宝箱(CSS 3D) ---------- */
+.gfx-chest{ position:relative; width:200px; height:150px; perspective:800px; margin-top:6px;
+  --w1:#8a5528; --w2:#4a2a10; --band:#f4c95d; --bandd:#a8741f; }
+.gfx.kind-halloween .gfx-chest{ --w1:#55306f; --w2:#241238; --band:#ff9a2e; --bandd:#a8500c; }
+.gfx-chest::before{ content:''; position:absolute; left:50%; bottom:20px; width:300px; height:300px; margin-left:-150px; border-radius:50%; pointer-events:none;
+  background:radial-gradient(circle, var(--glow), transparent 65%); opacity:.35; animation:glowPulse 2.4s ease-in-out infinite; }
+.gfx.opened .gfx-chest::before{ opacity:.95; transform:scale(1.4); transition:all .5s var(--out); }
+@keyframes glowPulse{ 0%,100%{ transform:scale(.95); } 50%{ transform:scale(1.08); } }
+.ch-shadow{ position:absolute; left:6%; right:6%; bottom:-12px; height:18px; border-radius:50%; background:rgba(0,0,0,.5); filter:blur(7px); }
+.ch-body{ position:absolute; left:0; right:0; bottom:0; height:84px; border-radius:6px 6px 14px 14px; border:3px solid var(--bandd);
+  background:
+    linear-gradient(90deg, transparent 0 15%, var(--band) 15% 21%, transparent 21% 79%, var(--band) 79% 85%, transparent 85%),
+    repeating-linear-gradient(180deg, rgba(0,0,0,.2) 0 2px, transparent 2px 27px),
+    linear-gradient(180deg, var(--w1), var(--w2));
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.2), 0 12px 26px rgba(0,0,0,.5); }
+.ch-front{ position:absolute; inset:0; }
+.ch-lock{ position:absolute; left:50%; top:8px; width:30px; height:34px; margin-left:-15px; border-radius:7px; border:2px solid #2a1200;
+  background:linear-gradient(var(--band), var(--bandd)); box-shadow:inset 0 2px 0 rgba(255,255,255,.4); }
+.ch-lock::after{ content:''; position:absolute; left:50%; top:11px; width:6px; height:10px; margin-left:-3px; border-radius:3px; background:#2a1200; }
+.ch-inside{ position:absolute; left:5px; right:5px; top:-4px; height:18px; border-radius:8px 8px 0 0; opacity:0; transition:opacity .3s;
+  background:radial-gradient(ellipse at 50% 100%, #fffbe0, var(--band) 55%, #6a3a08); box-shadow:0 -6px 30px var(--glow); }
+.gfx.opened .ch-inside{ opacity:1; }
+.ch-lid{ position:absolute; left:-5px; right:-5px; bottom:78px; height:70px; transform-origin:50% 100%;
+  border-radius:100px 100px 8px 8px / 72px 72px 8px 8px; border:3px solid var(--bandd);
+  background:
+    linear-gradient(90deg, transparent 0 15%, var(--band) 15% 21%, transparent 21% 79%, var(--band) 79% 85%, transparent 85%),
+    linear-gradient(180deg, var(--w1), var(--w2));
+  box-shadow:inset 0 4px 0 rgba(255,255,255,.22); transition:transform .75s cubic-bezier(.3,1.5,.5,1); }
+.ch-clasp{ position:absolute; left:50%; bottom:-7px; width:28px; height:20px; margin-left:-14px; border-radius:5px; border:2px solid #2a1200;
+  background:linear-gradient(var(--band), var(--bandd)); }
+.gfx-chest.open .ch-lid{ transform:rotateX(-122deg); }
+.ch-beam{ position:absolute; left:50%; bottom:76px; width:170px; height:0; margin-left:-85px; opacity:0; pointer-events:none; filter:blur(2px);
+  background:linear-gradient(to top, rgba(255,246,190,.95), rgba(255,210,100,0)); clip-path:polygon(20% 100%, 80% 100%, 100% 0, 0 0); }
+.gfx-chest.open .ch-beam{ animation:beamUp 1.3s ease-out forwards; }
+@keyframes beamUp{ 0%{ height:0; opacity:.95; } 60%{ height:340px; opacity:.7; } 100%{ height:340px; opacity:.28; } }
+
+.gfx-chest.drop{ animation:chestDrop .95s cubic-bezier(.3,.7,.4,1) both; }
+@keyframes chestDrop{
+  0%{ transform:translateY(-110vh) rotate(-10deg); } 55%{ transform:translateY(0) rotate(3deg); } 68%{ transform:translateY(-34px) rotate(-1deg); }
+  80%{ transform:translateY(0); } 90%{ transform:translateY(-10px); } 100%{ transform:translateY(0) rotate(0); } }
+.gfx-chest.idle{ animation:chestIdle 1.6s ease-in-out infinite; }
+@keyframes chestIdle{ 0%,100%{ transform:rotate(-1.6deg); } 50%{ transform:rotate(1.6deg) translateY(-3px); } }
+.gfx-chest.shake{ animation:chestShake .95s linear both; }
+@keyframes chestShake{
+  0%{ transform:translate(0,0) rotate(0); } 10%{ transform:translate(-3px,0) rotate(-2deg); } 20%{ transform:translate(4px,0) rotate(2.5deg); }
+  30%{ transform:translate(-5px,-2px) rotate(-3deg); } 40%{ transform:translate(6px,0) rotate(3.5deg); } 50%{ transform:translate(-7px,-3px) rotate(-4deg); }
+  60%{ transform:translate(8px,0) rotate(4.5deg); } 70%{ transform:translate(-8px,-4px) rotate(-5deg); } 80%{ transform:translate(9px,0) rotate(5deg); }
+  90%{ transform:translate(-9px,-4px) rotate(-5deg); } 100%{ transform:translate(0,0) rotate(0); } }
+
+/* ---------- ルーレット(宝箱の上) ---------- */
+.gfx-reelwrap{ position:relative; width:100%; display:flex; justify-content:center; padding:16px 0; opacity:0; transform:translateY(120px) scale(.35); pointer-events:none; }
+.gfx-reelwrap.up{ opacity:1; transform:none; transition:opacity .4s, transform .6s var(--spring); }
+.gfx-reel{ position:relative; width:min(92vw, 420px); height:118px; overflow:hidden; border-radius:12px; border:2px solid var(--acc);
+  background:rgba(8,4,20,.88); box-shadow:0 0 34px var(--glow), inset 0 0 24px rgba(0,0,0,.6); }
+.gfx-reel.landed{ animation:reelLand .6s var(--spring); }
+@keyframes reelLand{ 0%{ transform:scale(1); } 40%{ transform:scale(1.06); } 100%{ transform:scale(1); } }
+.gfx-strip{ display:flex; align-items:center; height:100%; will-change:transform; }
+.gfx-reelglow{ position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(90deg, rgba(8,4,20,.96), transparent 24%, transparent 76%, rgba(8,4,20,.96)); }
+.gfx-reelglow::after{ content:''; position:absolute; left:50%; top:0; bottom:0; width:2px; margin-left:-1px; background:linear-gradient(transparent, var(--acc), transparent); opacity:.85; }
+.gfx-pointer{ position:absolute; left:50%; transform:translateX(-50%); z-index:4; color:var(--acc); font-size:20px; line-height:1; text-shadow:0 0 12px var(--glow); }
+.gfx-pointer.top{ top:0; } .gfx-pointer.bot{ bottom:0; }
+.gfx-tile{ flex:0 0 92px; width:92px; height:96px; margin:0 4px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px;
+  border-radius:9px; background:linear-gradient(160deg, rgba(255,255,255,.1), rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.14); }
+.gfx-tile .gt-sw{ display:flex; gap:3px; } .gfx-tile .gt-sw i{ display:block; width:14px; height:14px; border-radius:3px; }
+.gfx-tile .gt-nm{ max-width:84px; padding:0 4px; font:800 10.5px var(--sans); color:#fff; text-align:center; line-height:1.25; }
+.gfx-tile .gt-emo{ font-size:28px; line-height:1; opacity:.8; }
+.gfx-tile.miss{ background:rgba(255,255,255,.04); }
+.gfx-tile.miss .gt-nm{ color:rgba(255,255,255,.5); }
+.gfx-reel.landed .gfx-tile.target{ border-color:var(--acc); box-shadow:0 0 22px var(--glow), inset 0 0 14px var(--glow); animation:tileGlow .7s ease-in-out infinite alternate; }
+@keyframes tileGlow{ from{ transform:scale(1); } to{ transform:scale(1.08); } }
+
+/* ---------- 結果 ---------- */
+.gfx-result{ position:absolute; inset:0; z-index:7; display:none; align-items:center; justify-content:center; padding:18px; overflow-y:auto;
+  background:rgba(6,3,14,.84); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+.gfx-result.show{ display:flex; animation:fadeIn .3s ease-out both; }
+.gfx-panel{ width:100%; max-width:380px; margin:auto; padding:20px 16px 16px; text-align:center;
+  background:linear-gradient(160deg, var(--glass-hi), transparent 40%), var(--panel); border:1px solid var(--gold-line); border-radius:var(--r-lg);
+  box-shadow:0 24px 70px rgba(0,0,0,.6), inset 0 0 40px var(--gold-soft); animation:popBounce .5s var(--out) both; }
+.gfx-title{ font:800 20px var(--serif); letter-spacing:.08em; color:var(--gold); margin-bottom:12px; }
+.gfx-big{ padding:18px 12px; border-radius:var(--r); background:rgba(0,0,0,.25); border:2px solid rgba(255,255,255,.12); }
+.gfx-big.win{ border-color:var(--acc); box-shadow:0 0 28px var(--glow); }
+.gfx-big.dup{ border-color:#6fa8ff; }
+.gb-sw{ display:flex; justify-content:center; gap:5px; } .gb-sw i{ display:block; width:26px; height:26px; border-radius:6px; box-shadow:0 3px 8px rgba(0,0,0,.4); animation:itemIn .4s var(--spring) both; }
+.gb-sw i:nth-child(2){ animation-delay:.05s; } .gb-sw i:nth-child(3){ animation-delay:.1s; } .gb-sw i:nth-child(4){ animation-delay:.15s; } .gb-sw i:nth-child(5){ animation-delay:.2s; }
+.gb-sw i:nth-child(6){ animation-delay:.25s; } .gb-sw i:nth-child(7){ animation-delay:.3s; }
+.gb-emo{ font-size:44px; }
+.gb-name{ margin-top:12px; font:800 18px var(--serif); color:#fff; }
+.gb-tag{ margin-top:6px; font:800 13px var(--sans); color:var(--gold); }
+.gfx-big.dup .gb-tag{ color:#9cc2ff; } .gfx-big.miss .gb-tag{ color:var(--text-dim); }
+.gb-extra{ margin-top:8px; font:700 12.5px var(--sans); color:var(--mint); }
+.gfx-sum{ display:flex; justify-content:center; gap:12px; margin-bottom:10px; font:800 12px var(--sans); color:var(--text-dim); }
+.gfx-sum .w{ color:var(--acc); }
+.gfx-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:7px; }
+.gfx-card{ position:relative; aspect-ratio:3/4; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:4px;
+  border-radius:8px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); animation:cardFlip .55s var(--out) backwards; }
+.gfx-card.win{ border-color:var(--acc); background:linear-gradient(160deg, rgba(255,210,100,.22), rgba(255,255,255,.04)); box-shadow:0 0 14px var(--glow); }
+.gfx-card.dup{ border-color:#6fa8ff; }
+.gfx-card .gc-sw{ display:flex; flex-direction:column; gap:3px; } .gfx-card .gc-sw i{ display:block; width:22px; height:9px; border-radius:3px; }
+.gfx-card .gc-emo{ font-size:22px; opacity:.7; }
+.gfx-card .gc-nm{ font:800 8.5px var(--sans); line-height:1.25; color:#fff; text-align:center; }
+.gfx-card.miss .gc-nm{ color:rgba(255,255,255,.5); }
+.gc-new{ position:absolute; top:-6px; right:-4px; padding:1px 5px; border-radius:4px; font:900 8px var(--sans); letter-spacing:.06em; color:#2a1730; background:linear-gradient(135deg,var(--acc),#fff3b0); }
+@keyframes cardFlip{ 0%{ opacity:0; transform:perspective(500px) rotateY(90deg) scale(.7); } 100%{ opacity:1; transform:none; } }
+.gfx-extras{ margin-top:10px; font-size:10.5px; color:var(--text-dim); }
+.gfx-btns{ display:flex; gap:10px; margin-top:16px; }
+.gfx-btn{ flex:1; min-height:46px; cursor:pointer; font:800 14px var(--sans); color:#2a1730; border:1px solid rgba(255,255,255,.4); border-radius:var(--r);
+  background:linear-gradient(135deg, var(--gold), var(--coral)); box-shadow:inset 0 1px 0 rgba(255,255,255,.5); }
+.gfx-btn.ghost{ color:var(--text); background:var(--panel-light); border-color:rgba(255,255,255,.12); box-shadow:none; }
+
+/* ---------- 紙吹雪 ---------- */
+.gfx-conf{ position:absolute; left:50%; top:55%; width:9px; height:13px; z-index:9; pointer-events:none; border-radius:2px; animation:confFly 1.5s cubic-bezier(.2,.7,.3,1) forwards; }
+@keyframes confFly{ 0%{ transform:translate(0,0) rotate(0); opacity:1; } 100%{ transform:translate(var(--dx), calc(var(--dy) + 280px)) rotate(var(--rot)); opacity:0; } }
+
+@media (max-height:640px){ .gfx-caption{ margin-top:16px; } .gfx-reel{ height:104px; } .gfx-tile{ height:84px; } }
