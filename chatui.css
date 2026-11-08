@@ -1,0 +1,110 @@
+/* chatui.css — チャット系の画面(グローバルチャット / DM / 運営チャット)をフルスクリーンにして、読みやすくする */
+
+/* ===== 画面いっぱいに開く(script.js が #modalOverlay に .fullchat を付ける) ===== */
+#modalOverlay.fullchat{ padding:0 !important; align-items:stretch !important; justify-content:stretch !important; }
+#modalOverlay.fullchat .panel-box{
+  position:fixed !important; left:0; right:0; top:0; bottom:0;
+  width:100% !important; max-width:none !important; height:100dvh; max-height:none !important;
+  margin:0 !important; border-radius:0 !important; border:0 !important;
+  padding:max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)) !important;
+  display:flex; flex-direction:column; overflow:hidden !important; animation:none;
+}
+#modalOverlay.fullchat .panel-box::before,
+#modalOverlay.fullchat .panel-box::after{ display:none !important; }
+#modalOverlay.fullchat .close-x{ top:max(10px, env(safe-area-inset-top)); right:max(10px, env(safe-area-inset-right)); }
+#modalOverlay.fullchat #modalContent{
+  flex:1 1 auto; min-height:0; display:flex; flex-direction:column; text-align:left;
+  overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain;
+}
+#modalOverlay.fullchat #modalContent > *{ flex:0 0 auto; }
+#modalOverlay.fullchat #modalContent > .chat-scroll,
+#modalOverlay.fullchat #modalContent > .sup-msgs{ flex:1 1 0; min-height:0; height:auto; max-height:none; }
+
+/* ===== タイトル ===== */
+.chat-title{ margin:0 0 2px; padding-right:48px; font-size:20px; color:var(--gold); text-align:left; }
+.chat-sub{ margin:0 0 8px; font-size:12px; line-height:1.5; color:var(--text-dim); }
+.dm-thread-header{ padding-right:48px; }
+.dm-thread-title{ min-width:0; }
+.dm-thread-title b{ font-size:17px; display:flex; align-items:center; flex-wrap:wrap; gap:2px; }
+.dm-thread-title span{ font-size:11px; }
+
+/* ===== メッセージの一覧 ===== */
+.chat-scroll{
+  flex:1 1 0; min-height:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
+  padding:8px 10px; margin:0 0 8px; border-radius:14px; text-align:left;
+  background:var(--bg-deep2); border:1px solid rgba(255,255,255,.06);
+}
+.chat-empty{ padding:24px 8px; text-align:center; font-size:14px; color:var(--text-dim); }
+
+/* グローバルチャット: アイコン | (名前 Lv 称号 時刻 / 本文) */
+.chat-item{ border-bottom:1px solid rgba(255,255,255,.05); }
+.chat-line{ display:flex; align-items:flex-start; gap:10px; padding:9px 4px; border-radius:10px; }
+.chat-line > .av{ margin-top:2px; cursor:zoom-in; }
+.chat-body{ flex:1 1 auto; min-width:0; }
+.chat-meta{ display:flex; align-items:center; flex-wrap:wrap; gap:4px 6px; margin-bottom:2px; line-height:1.3; }
+.chat-who{ font-size:14px; font-weight:800; color:var(--gold); cursor:pointer; word-break:break-all; }
+.chat-time{ margin-left:auto; font-size:11px; color:var(--text-dim); }
+.chat-text{ font-size:15px; line-height:1.6; color:var(--text); overflow-wrap:anywhere; word-break:break-word; white-space:pre-wrap; }
+.chat-text .msg-edited, .chat-text .msg-retracted{ white-space:normal; }
+.chat-item .bplv{ margin-left:0; }
+
+/* 画像は、画面からはみ出さない */
+.chat-img-wrap{ margin-top:6px; max-width:100%; }
+.chat-img{ display:block; width:auto; height:auto; max-width:min(100%, 320px); max-height:min(300px, 42dvh); object-fit:contain; }
+.chat-img-gone{ max-width:100%; }
+
+/* DMの吹き出し */
+.dm-bubble-col{ max-width:84%; }
+.dm-bubble{ font-size:15px; line-height:1.55; padding:9px 13px; }
+.dm-time{ margin-top:2px; font-size:10.5px; color:var(--text-dim); }
+
+/* ===== 入力欄(下に固定。16px以上にして、スマホで勝手に拡大されないように) ===== */
+.chat-inputrow{ display:flex; align-items:center; gap:8px; flex:0 0 auto; padding-top:2px; }
+.chat-input{
+  flex:1 1 auto; min-width:0; min-height:46px; padding:10px 14px; border-radius:23px;
+  border:1px solid rgba(255,255,255,.18); background:var(--bg-deep2); color:var(--text);
+  font:16px/1.4 'Nunito','Noto Sans JP',sans-serif;
+}
+.chat-input:focus{ outline:2px solid var(--gold); outline-offset:0; }
+.chat-send{ flex:0 0 auto; width:auto !important; min-height:46px; margin:0 !important; padding:0 20px !important; border-radius:23px; }
+.chat-attach{ width:46px; height:46px; padding:0; border-radius:50%; }
+.edit-bar, .chat-img-preview{ flex:0 0 auto; }
+
+/* ===== 運営チャット(サポート) ===== */
+#modalOverlay.fullchat .sup-msgs{ padding:10px 12px; margin-bottom:8px; }
+#modalOverlay.fullchat .sup-msg{ max-width:90%; }
+#modalOverlay.fullchat .sup-bub{ font-size:15px; line-height:1.6; }
+#modalOverlay.fullchat .sup-who{ font-size:12px; display:flex; align-items:center; flex-wrap:wrap; gap:2px; }
+#modalOverlay.fullchat .sup-who .av{ cursor:zoom-in; }
+#modalOverlay.fullchat .sup-input textarea{ font-size:16px; min-height:46px; }
+#modalOverlay.fullchat .sup-input{ flex:0 0 auto; margin-top:0; }
+
+/* ===== アイコンの拡大表示(チャットの画像と同じ画面) ===== */
+.av-zoom{ cursor:zoom-in; }
+.lightbox{ flex-direction:column; gap:14px; }
+.lightbox .lb-icon{ max-width:86vw; max-height:70dvh; border-radius:50%; object-fit:cover; background:#120a22; border:3px solid rgba(255,255,255,.25); }
+.lightbox .lb-av .av{ box-shadow:0 20px 60px rgba(0,0,0,.6); border:3px solid rgba(255,255,255,.25); }
+.lightbox .av{ margin:0; }
+.lightbox .lb-cap{ max-width:86vw; font:800 16px/1.4 var(--sans); color:#fff; text-align:center; word-break:break-word; }
+
+/* ===== フレンドをさがす / ギフトを贈る (v3.9) ===== */
+.fs-box{ margin-bottom:12px; }
+.fs-input{ width:100%; box-sizing:border-box; min-height:44px; padding:10px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:var(--bg-deep2); color:var(--text); font:16px/1.4 inherit; margin-bottom:8px; }
+.fs-list{ max-height:42vh; overflow-y:auto; overscroll-behavior:contain; border-radius:12px; background:rgba(255,255,255,.04); padding:4px 8px; }
+.fs-head{ margin:6px 2px; font-size:12px; font-weight:800; color:var(--gold); }
+.fs-row{ display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.06); }
+.fs-who{ flex:1; min-width:0; display:flex; align-items:center; flex-wrap:wrap; font-weight:800; font-size:14px; cursor:pointer; word-break:break-all; }
+.fs-who .fid{ margin-left:6px; font-size:10.5px; font-weight:600; color:var(--text-dim); }
+.fs-state{ flex:none; font-size:11px; font-weight:800; color:var(--text-dim); }
+.fs-more{ display:block; width:100%; margin:8px 0; padding:10px; }
+.fbtn.ok{ background:var(--mint, #4fd6a8); color:#10281f; }
+.fbtn.gift{ background:rgba(255,200,80,.2); color:var(--gold); }
+
+.pg-overlay{ position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,.65); }
+.pg-card{ width:100%; max-width:340px; padding:18px 16px; border-radius:18px; background:var(--panel, #1c1a26); color:var(--text, #fff); border:1px solid rgba(255,255,255,.14); text-align:left; }
+.pg-title{ display:flex; align-items:center; flex-wrap:wrap; gap:4px; font-weight:800; font-size:16px; margin-bottom:6px; }
+.pg-sub{ font-size:12px; line-height:1.5; color:var(--text-dim); margin-bottom:10px; }
+.pg-quick{ display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
+.pg-err{ margin:0 0 8px; padding:8px 10px; border-radius:10px; font-size:13px; background:rgba(255,80,80,.16); color:#ffb3b3; }
+.pg-err[hidden]{ display:none; }
+.pg-btns{ display:flex; gap:8px; } .pg-btns .primary-btn{ flex:1; margin:0; } .pg-btns .fbtn{ min-height:44px; padding:0 16px; }
