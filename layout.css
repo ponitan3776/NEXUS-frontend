@@ -1,0 +1,312 @@
+/* =====================================================================
+   🧭 レイアウト刷新 (v3.1)  —  theme.css の後に読み込む
+   ・ホーム: ロビー型(中央に大きなPLAY、下に機能タイル)
+   ・ゲーム中: 細いバーで盤面を最大化。アイコン類は ☰ のシートへ
+   ・モーダル: 画面下から出るボトムシート
+   ・形: 角丸は小さく、四隅に金のブラケット(角飾り)を付けたシャープな高級感
+   ・テトリスの操作: 左手=移動、右手=回転/落下/ホールドの2ブロック配置
+   ===================================================================== */
+
+:root{ --r:8px; --r-lg:12px; }
+
+/* ---------- 共通: 四隅のブラケット(角飾り) ---------- */
+.lobby-play::before, .lobby-tile::before, .lobby-wide::before, .lobby-event::before, .lobby-chip::before,
+#modalBox::before, #overlay .panel-box::before, #quickSheet::before, .score-card::before{
+  content:''; position:absolute; inset:3px; pointer-events:none; border-radius:inherit; opacity:.7; z-index:1;
+  background:
+    linear-gradient(var(--gold),var(--gold)) top left / 10px 1px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) top left / 1px 10px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) top right / 10px 1px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) top right / 1px 10px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) bottom left / 10px 1px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) bottom left / 1px 10px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) bottom right / 10px 1px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) bottom right / 1px 10px no-repeat;
+}
+
+/* ---------- 形を全体的にシャープに ---------- */
+.cell, .piece-cell, .ghost-cell{ border-radius:4px; }
+#board, #tetrisBoard, #tetrisAiBoard{ border-radius:10px; }
+#tray{ border-radius:var(--r-lg); }
+.tray-slot{ border-radius:var(--r); }
+.score-card, .icon-btn, .pill-btn, .quest-item, .mode-card, .record-box, .achievement-item, .settings-row,
+.friend-item, .size-row, .hw-card, .hw-mission, .hw-road-row, .hw-gcard, .hw-day, .tab-row, .claim-btn,
+.primary-btn, .ghost-btn, .coin-tag, .hw-banner{ border-radius:var(--r); }
+.tab-btn{ border-radius:6px; }
+.tetris-btn{ border-radius:10px; }
+.hw-timer{ border-radius:var(--r); }
+
+/* =====================================================================
+   🏠 ロビー(タイトル画面)
+   ===================================================================== */
+#titleScreen{ padding:0; align-items:stretch; justify-content:center; overflow-y:auto; }
+.lobby{
+  width:100%; max-width:460px; min-height:100%; display:flex; flex-direction:column; gap:12px;
+  padding:max(14px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+}
+.lobby > *{ flex-shrink:0; }
+
+/* 上のバー: アカウント / コイン / 設定 */
+.lobby-top{ display:flex; gap:8px; align-items:stretch; }
+.lobby-chip, .lobby-icon{
+  position:relative; display:flex; align-items:center; gap:8px; min-height:42px; padding:0 12px;
+  background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02)), var(--panel);
+  border:1px solid var(--gold-line); border-radius:var(--r); color:var(--text); font:800 13px var(--sans); cursor:pointer;
+}
+.lobby-chip{ flex:1; min-width:0; }
+.lobby-chip.coin{ flex:0 0 auto; cursor:default; }
+.lobby-chip.coin b{ color:var(--gold); font-family:var(--serif); font-size:16px; letter-spacing:.02em; }
+.lobby-chip span:not(.lc-ic){ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lobby-icon{ width:42px; justify-content:center; padding:0; font-size:18px; }
+.lobby-chip:active, .lobby-icon:active{ transform:scale(.97); }
+
+/* ハロウィンのバナー */
+.lobby-event{
+  position:relative; display:flex; align-items:center; gap:10px; width:100%; padding:11px 14px; border-radius:var(--r);
+  background:linear-gradient(110deg,#ff8a1f 0%,#c2410c 55%,#7c2d12 100%); color:#fff7e6; border:1px solid rgba(255,210,140,.6);
+  box-shadow:0 8px 28px rgba(255,120,20,.4), inset 0 1px 0 rgba(255,255,255,.35); cursor:pointer; text-align:left;
+  animation:pumpkinGlow 2.8s ease-in-out infinite;
+}
+.lobby-event .btn-icon{ height:30px; }
+.lobby-event .le-main{ font:800 14px var(--sans); letter-spacing:.03em; flex:1; }
+.lobby-event small{ font-size:10.5px; font-weight:700; opacity:.92; font-variant-numeric:tabular-nums; }
+.lobby-event .le-go{ font-size:22px; line-height:1; opacity:.85; }
+.lobby-event:active{ transform:scale(.98); }
+
+/* ロゴ(中央に大きく) */
+.lobby-hero{ position:relative; z-index:0; flex:1 0 auto; min-height:150px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:8px 0; }
+.lobby-hero .title-logo{ font-size:clamp(24px, 7.4vw, 36px); line-height:1.15; margin:0; white-space:nowrap; }   /* 途中で改行されない */
+.lobby-hero .title-sub{ margin:8px 0 0; font-size:11px; }
+.lobby-hero.has-logo .title-logo, .lobby-hero.has-logo .title-sub{ display:none; }
+.lobby-hero .title-logo-img{ max-width:86%; max-height:clamp(84px, 22dvh, 170px); width:auto; height:auto; object-fit:contain; margin:0 auto; }
+.lobby-event{ z-index:2; }   /* ハロウィンのバナーは、ロゴより手前 */
+body.hw .lobby-hero .title-logo::before{ font-size:38px; margin-bottom:6px; }
+
+/* 大きなPLAYボタン */
+.lobby-play{
+  position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; width:100%; min-height:88px;
+  border:1px solid rgba(255,255,255,.4); border-radius:var(--r-lg); cursor:pointer; overflow:hidden;
+  background:linear-gradient(135deg, var(--gold) 0%, var(--coral) 100%); color:#2a1730;
+  box-shadow:0 14px 38px color-mix(in srgb, var(--coral) 38%, transparent), inset 0 1px 0 rgba(255,255,255,.6);
+}
+.lobby-play::before{ opacity:.85; background:
+    linear-gradient(#2a1730,#2a1730) top left / 12px 1px no-repeat, linear-gradient(#2a1730,#2a1730) top left / 1px 12px no-repeat,
+    linear-gradient(#2a1730,#2a1730) top right / 12px 1px no-repeat, linear-gradient(#2a1730,#2a1730) top right / 1px 12px no-repeat,
+    linear-gradient(#2a1730,#2a1730) bottom left / 12px 1px no-repeat, linear-gradient(#2a1730,#2a1730) bottom left / 1px 12px no-repeat,
+    linear-gradient(#2a1730,#2a1730) bottom right / 12px 1px no-repeat, linear-gradient(#2a1730,#2a1730) bottom right / 1px 12px no-repeat; }
+.lobby-play::after{ content:''; position:absolute; top:0; left:-60%; width:40%; height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent); transform:skewX(-20deg); animation:shine 4.5s ease-in-out infinite; }
+.lobby-play .lp-main{ font:800 32px var(--serif); letter-spacing:.14em; text-shadow:0 1px 0 rgba(255,255,255,.35); }
+.lobby-play .lp-sub{ font:700 11px var(--sans); letter-spacing:.18em; opacity:.8; }
+.lobby-play:active{ transform:scale(.985); }
+
+/* サブの2ボタン */
+.lobby-quick{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.lobby-wide{
+  position:relative; display:flex; align-items:center; justify-content:center; gap:8px; min-height:54px; padding:0 8px;
+  background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02)), var(--panel-light);
+  border:1px solid rgba(255,255,255,.1); border-radius:var(--r); color:var(--text); font:800 14px var(--sans); cursor:pointer;
+  transition:border-color .2s, transform .15s var(--ease);
+}
+.lobby-wide .lw-ic{ font-size:20px; }
+.lobby-wide:hover{ border-color:var(--gold-line); }
+.lobby-wide:active{ transform:scale(.97); }
+
+/* 機能タイル(2×2) */
+.lobby-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.lobby-tile{
+  position:relative; display:flex; flex-direction:column; align-items:flex-start; justify-content:space-between; min-height:92px; padding:12px 14px;
+  background:linear-gradient(160deg, rgba(255,255,255,.08), transparent 55%), var(--panel);
+  border:1px solid rgba(255,255,255,.09); border-radius:var(--r); color:var(--text); text-align:left; cursor:pointer;
+  box-shadow:0 8px 22px rgba(0,0,0,.28); transition:border-color .2s, transform .15s var(--ease), box-shadow .2s;
+}
+.lobby-tile:hover{ border-color:var(--gold-line); box-shadow:0 12px 30px rgba(0,0,0,.4), 0 0 24px var(--gold-soft); }
+.lobby-tile:active{ transform:scale(.97); }
+.lobby-tile .lt-ic{ font-size:26px; line-height:1; filter:drop-shadow(0 2px 6px rgba(0,0,0,.4)); }
+.lobby-tile .lt-name{ font:800 14px var(--sans); margin-top:10px; }
+.lobby-tile .lt-sub{ font:700 9px var(--sans); letter-spacing:.22em; color:var(--gold); opacity:.8; margin-top:1px; }
+
+.lobby .title-version-row{ margin-top:2px; padding:0 2px; }
+#titleScreen.hidden ~ #versionBadge{ display:none; }
+body:not(.hw) .lobby-event{ animation:none; }
+
+/* =====================================================================
+   🎮 ゲーム中: 細いバー + 盤面を最大に
+   ===================================================================== */
+#app{ gap:6px; padding:max(6px, env(safe-area-inset-top)) 10px max(8px, env(safe-area-inset-bottom)); }
+header{ max-width:540px; padding:2px 2px; flex-wrap:nowrap; }
+header .title-wrap{ flex-direction:row; align-items:center; gap:10px; min-width:0; }
+header .title{
+  display:inline-flex; align-items:center; min-height:34px; padding:0 12px; border-radius:var(--r);
+  border:1px solid var(--gold-line); background-color:var(--panel); cursor:pointer; white-space:nowrap;
+  font:800 13px var(--sans); letter-spacing:.04em;
+}
+.mode-badge{ font-size:10px; max-width:42vw; overflow:hidden; text-overflow:ellipsis; letter-spacing:.06em; }
+.hd-actions{ display:flex; gap:6px; align-items:center; flex-shrink:0; }
+.hd-actions .icon-btn, .hd-actions .pill-btn{ width:40px; height:36px; font-size:17px; display:flex; align-items:center; justify-content:center; }
+#menuSheetBtn{ position:relative; }
+#menuSheetBtn .unread-dot{ top:2px; right:2px; }
+
+/* スコア: 低く・横一列 */
+.scoreboard{ max-width:540px; gap:6px; }
+.score-card{ position:relative; padding:4px 8px; }
+.score-card::before{ opacity:.35; inset:2px; }
+.score-card .label{ font-size:8.5px; }
+.score-card .value{ font-size:clamp(15px, 4.6vw, 20px); line-height:1.2; }
+
+/* 盤面を大きく(画面の高さに合わせて) */
+#board-wrap{ width:min(96vw, max(240px, calc(100dvh - 292px)), 540px); }
+#tray{ max-width:540px; min-height:84px; padding:8px; }
+
+/* ☰ メニューシート */
+#quickSheetWrap{ position:fixed; inset:0; z-index:150; display:none; align-items:flex-end; justify-content:center;
+  background:rgba(6,3,14,.6); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
+#quickSheetWrap.show{ display:flex; }
+#quickSheet{ position:relative; width:100%; max-width:560px; padding:10px 16px max(18px, env(safe-area-inset-bottom));
+  background:linear-gradient(160deg, var(--glass-hi), transparent 40%), var(--panel);
+  border:1px solid var(--gold-line); border-bottom:none; border-radius:var(--r-lg) var(--r-lg) 0 0;
+  box-shadow:0 -20px 60px rgba(0,0,0,.55); animation:sheetUp .28s var(--ease); }
+#quickSheet::before{ inset:6px; }
+.qs-handle{ width:44px; height:4px; border-radius:4px; background:var(--gold-line); margin:0 auto 10px; }
+.qs-title{ text-align:center; font:800 11px var(--sans); letter-spacing:.36em; color:var(--gold); margin-bottom:12px; }
+.qs-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+#quickSheet .icon-btn{ width:auto; height:74px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; font-size:24px; position:relative; }
+#quickSheet .icon-btn::after{ content:attr(data-label); font:800 10.5px var(--sans); color:var(--text-dim); letter-spacing:.02em; }
+#quickSheet .unread-dot{ top:6px; right:10px; }
+#quickSheet .mention-badge{ top:4px; right:6px; }
+@keyframes sheetUp{ from{ transform:translateY(40px); opacity:0; } to{ transform:none; opacity:1; } }
+
+/* =====================================================================
+   📋 モーダル: 画面下から出るボトムシート(広い画面では中央のダイアログ)
+   ===================================================================== */
+#modalOverlay{ align-items:flex-end; padding:0; }
+#modalOverlay .panel-box{
+  position:relative; width:100%; max-width:560px; max-height:90dvh; margin:0; padding:30px 18px max(22px, env(safe-area-inset-bottom));
+  border-radius:var(--r-lg) var(--r-lg) 0 0; border-bottom:none; text-align:center; animation:sheetUp .3s var(--ease);
+}
+#modalOverlay .panel-box::after{ content:''; position:absolute; top:9px; left:50%; width:44px; height:4px; margin-left:-22px; border-radius:4px; background:var(--gold-line); }
+#modalBox::before{ inset:6px; }
+#modalOverlay .close-x{ top:14px; right:14px; width:36px; height:36px; display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--gold-line); border-radius:var(--r); background:rgba(0,0,0,.25); z-index:3; font-size:18px; }
+#modalContent{ position:relative; z-index:2; }
+/* 結果画面(ゲームオーバー)は中央のカードのまま */
+#overlay .panel-box{ position:relative; border-radius:var(--r-lg); }
+#overlay .panel-box::before{ inset:6px; }
+@media (min-width:700px){
+  #modalOverlay{ align-items:center; padding:20px; }
+  #modalOverlay .panel-box{ border-radius:var(--r-lg); border-bottom:1px solid var(--gold-line); max-height:86dvh; }
+  #modalOverlay .panel-box::after{ display:none; }
+}
+
+/* =====================================================================
+   🧱 テトリス: 盤面を大きく + 両手の親指で押しやすい操作パッド
+   ===================================================================== */
+#tetris-wrap{ max-width:540px; gap:8px; }
+#tetris-wrap.solo-mode #tetrisBoard{ height:clamp(260px, calc(100dvh - 350px), 540px); }
+#tetris-wrap.vs-mode #tetrisBoard{ height:clamp(240px, min(calc(100dvh - 360px), calc((100vw - 150px) * 2)), 520px); }
+.tetris-controls{
+  display:grid; grid-template-columns:1fr 1fr 14px 1fr 1fr; grid-template-areas:"l r . rot rot" "soft soft . hard hold";
+  gap:8px; width:100%;
+}
+.tetris-controls #tBtnLeft{ grid-area:l; } .tetris-controls #tBtnRight{ grid-area:r; }
+.tetris-controls #tBtnRotate{ grid-area:rot; } .tetris-controls #tBtnSoft{ grid-area:soft; }
+.tetris-controls #tBtnHard{ grid-area:hard; } .tetris-controls #tBtnHold{ grid-area:hold; }
+.tetris-btn{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; min-height:58px; padding:6px 0;
+  border:1px solid rgba(255,255,255,.1);
+  background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.02)), var(--panel-light);
+  box-shadow:0 5px 0 rgba(0,0,0,.35), 0 8px 18px rgba(0,0,0,.25);
+  transition:transform .08s, box-shadow .08s;
+}
+.tetris-btn:active{ transform:translateY(3px); box-shadow:0 2px 0 rgba(0,0,0,.35); background:var(--purple); }
+.tetris-btn .tb-ic{ font-size:24px; line-height:1; }
+.tetris-btn small{ font:800 9.5px var(--sans); letter-spacing:.1em; opacity:.75; }
+.tetris-btn.rot{ min-height:58px; background:linear-gradient(135deg, var(--gold), var(--coral)); color:#2a1730; border-color:rgba(255,255,255,.4); }
+.tetris-btn.hard{ background:linear-gradient(135deg, var(--coral), var(--pink)); color:#2a1730; }
+.tetris-btn.hold{ font-size:inherit; }
+/* 横長の端末(iPadなど)では、以前どおり縦に並べて画面内に収める */
+@media (orientation:landscape) and (max-height:700px){
+  .tetris-controls{ display:flex; flex-direction:column; width:150px; }
+  .tetris-controls .tetris-btn{ grid-area:auto; }
+  #tetris-wrap.solo-mode #tetrisBoard{ height:min(82dvh, 460px); }
+}
+
+/* =====================================================================
+   🧭 重なり順の修正 + 📢 更新履歴シート
+   (以前: ウィンドウ z=200 < ロビー z=500 だったので、ロビーから開いたウィンドウが一番奥に隠れていた)
+   ===================================================================== */
+#modalOverlay{ z-index:650; }
+#versionBadge{ display:none !important; }          /* ロビーに「Ver. ○ / 更新履歴」があるので、浮かぶバッジは廃止 */
+
+#changelogPanel{
+  position:fixed; inset:0; right:auto; bottom:auto; width:auto; max-height:none; z-index:700; padding:0; border:none; border-radius:0; box-shadow:none;
+  background:rgba(6,3,14,.78); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); overflow:hidden;
+  display:none; align-items:flex-end; justify-content:center;
+}
+#changelogPanel.show{ display:flex; }
+.cl-sheet{
+  position:relative; width:100%; max-width:560px; max-height:88dvh; display:flex; flex-direction:column;
+  padding:10px 16px max(18px, env(safe-area-inset-bottom));
+  background:linear-gradient(160deg, var(--glass-hi), transparent 40%), var(--panel);
+  border:1px solid var(--gold-line); border-bottom:none; border-radius:var(--r-lg) var(--r-lg) 0 0;
+  box-shadow:0 -20px 60px rgba(0,0,0,.55); animation:sheetUp .3s var(--ease);
+}
+.cl-head{ display:flex; align-items:center; justify-content:space-between; margin:6px 0 12px; }
+.cl-title{ font:800 19px var(--serif); letter-spacing:.06em; color:var(--gold); }
+.cl-close{ width:38px; height:38px; display:flex; align-items:center; justify-content:center; font-size:17px; cursor:pointer;
+  color:var(--text); background:rgba(0,0,0,.25); border:1px solid var(--gold-line); border-radius:var(--r); }
+.cl-body{ overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; display:flex; flex-direction:column; gap:8px; padding-bottom:6px; }
+.cl-item{ border:1px solid rgba(255,255,255,.08); border-radius:var(--r); background:var(--panel-light); }
+.cl-item[open]{ border-color:var(--gold-line); }
+.cl-item summary{ list-style:none; display:flex; align-items:center; gap:10px; padding:13px 14px; cursor:pointer; font-weight:800; font-size:14px; }
+.cl-item summary::-webkit-details-marker{ display:none; }
+.cl-item summary::after{ content:'＋'; margin-left:auto; color:var(--gold); font-weight:900; }
+.cl-item[open] summary::after{ content:'－'; }
+.cl-date{ font-size:11px; font-weight:700; color:var(--text-dim); }
+.cl-new{ background:linear-gradient(135deg,var(--gold),var(--coral)); color:#2a1730; font-size:9px; font-weight:900; letter-spacing:.08em; padding:2px 7px; border-radius:4px; }
+.cl-items{ padding:0 14px 13px; display:flex; flex-direction:column; gap:7px; }
+.cl-line{ font-size:12.5px; line-height:1.65; color:var(--text-dim); padding-left:2px; }
+@media (min-width:700px){ #changelogPanel{ align-items:center; } .cl-sheet{ border-radius:var(--r-lg); border-bottom:1px solid var(--gold-line); max-height:80dvh; } }
+
+/* =====================================================================
+   🗂 機能の整理 (v3.4) — ロビーと☰メニューを同じ区分(あそぶ / あつめる / みんなと / せってい)に
+   ===================================================================== */
+.lobby-hero{ min-height:96px; padding:12px 0; }
+.lobby-top .lobby-icon{ position:relative; }
+.lobby-icon.gift{ animation:pumpkinGlow 2.2s ease-in-out infinite; border-color:rgba(255,210,140,.7); }
+.lt-badge{ position:absolute; top:6px; right:8px; min-width:18px; height:18px; padding:0 5px; border-radius:9px; display:none; align-items:center; justify-content:center;
+  font:900 10px var(--sans); color:#fff; background:#e0245a; box-shadow:0 0 0 2px var(--panel); z-index:2; }
+.lt-badge.show{ display:flex; animation:badgePop .3s var(--spring) both; }
+.lobby-icon .lt-badge{ top:-5px; right:-5px; }
+.lobby-icon .unread-dot{ top:4px; right:4px; }
+
+.lobby-sec{ display:flex; flex-direction:column; gap:7px; }
+.lobby-sec-h{ display:flex; align-items:center; gap:10px; padding:0 2px; font:800 12px var(--sans); letter-spacing:.12em; color:var(--gold); }
+.lobby-sec-h::after{ content:''; flex:1; height:1px; background:linear-gradient(90deg, var(--gold-line), transparent); }
+.lobby-grid.cols3{ grid-template-columns:repeat(3,1fr); gap:8px; }
+.lobby-grid.cols4{ grid-template-columns:repeat(4,1fr); gap:8px; }
+.lobby-tile.compact{ min-height:78px; padding:10px 6px; align-items:center; justify-content:center; text-align:center; gap:5px; }
+.lobby-tile.compact .lt-ic{ font-size:24px; }
+.lobby-tile.compact .lt-name{ margin-top:0; font:800 11.5px var(--sans); line-height:1.25; }
+.lobby-grid.cols4 .lobby-tile.compact .lt-name{ font-size:10.5px; }
+.lobby-tile.compact::before{ inset:2px; opacity:.55; }
+.lobby-tile .lt-new{ top:5px; right:6px; font-size:8px; padding:1px 5px; }
+.title-version-row{ display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; }
+.title-version-row button{ cursor:pointer; background:none; border:none; color:var(--text-dim); font:700 12px var(--sans); text-decoration:underline; text-underline-offset:3px; padding:6px 4px; }
+
+/* ☰ すべてのメニュー: ロビーより手前(640)、ウィンドウ(650)より奥 */
+#quickSheetWrap{ z-index:640; }
+#quickSheet{ max-height:86dvh; display:flex; flex-direction:column; }
+.qs-search{ width:100%; margin:0 0 10px; padding:11px 14px; font:700 14px var(--sans); color:var(--text); background:rgba(0,0,0,.25);
+  border:1px solid var(--gold-line); border-radius:var(--r); outline:none; -webkit-appearance:none; appearance:none; }
+.qs-search::placeholder{ color:var(--text-dim); font-weight:600; }
+.qs-search:focus{ border-color:var(--gold); box-shadow:0 0 0 2px var(--gold-soft); }
+.qs-body{ overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding-bottom:4px; }
+.qs-sec{ margin-bottom:12px; }
+.qs-sec-h{ margin:2px 2px 8px; font:800 11px var(--sans); letter-spacing:.14em; color:var(--gold); }
+.qs-empty{ text-align:center; padding:22px 0; font-size:12.5px; color:var(--text-dim); }
+#quickSheet .qs-grid{ grid-template-columns:repeat(4,1fr); }
+#quickSheet .icon-btn{ height:70px; }
+#quickSheet .icon-btn.hit{ border-color:var(--gold); box-shadow:0 0 0 1px var(--gold), 0 6px 16px var(--gold-soft); }
+#quickSheetWrap[data-ctx="game"] .lobby-only{ display:none !important; }
+#quickSheet .icon-btn.hide-q, .qs-sec.hide-q{ display:none !important; }
