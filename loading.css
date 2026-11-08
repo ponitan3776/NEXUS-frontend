@@ -1,0 +1,104 @@
+/* =====================================================================
+   ✨ ロード画面 (v3.5)
+   ・ページを開いた瞬間に表示 → ゲームの準備ができたらふわっと消える
+   ・サーバー(無料枠)が寝ていて時間がかかるときは、そのことを文字で案内する
+   ・ハロウィン期間中は、自動でオレンジの夜バージョンになる(#bootLoader.bl-hw)
+   ===================================================================== */
+#bootLoader{
+  --bl-a:#ffd93d; --bl-b:#ff6b9d; --bl-c:#8a5cff; --bl-bg:#0a0613;
+  position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 0%, #2a1456 0%, #140a2c 45%, var(--bl-bg) 100%);
+  color:#fff7e6; font-family:'Nunito','Noto Sans JP',system-ui,sans-serif;
+  padding:max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+  transition:opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1), visibility 0s linear .7s;
+}
+#bootLoader.bl-hw{ --bl-a:#ffb03a; --bl-b:#ff6a1f; --bl-c:#a43cff;
+  background:radial-gradient(120% 90% at 50% 0%, #3a1450 0%, #1a0a2a 45%, #0a0613 100%); }
+#bootLoader.out{ opacity:0; transform:scale(1.04); visibility:hidden; pointer-events:none; }
+
+/* ---- 背景: ゆっくり動くオーロラ + 星 ---- */
+#bootLoader .bl-aurora{ position:absolute; inset:-20%; pointer-events:none; filter:blur(50px); opacity:.55;
+  background:
+    radial-gradient(40% 35% at 25% 30%, color-mix(in srgb, var(--bl-c) 70%, transparent), transparent 70%),
+    radial-gradient(38% 32% at 78% 62%, color-mix(in srgb, var(--bl-b) 60%, transparent), transparent 70%),
+    radial-gradient(30% 28% at 55% 90%, color-mix(in srgb, var(--bl-a) 45%, transparent), transparent 70%);
+  animation:blAurora 14s ease-in-out infinite alternate; }
+@keyframes blAurora{ from{ transform:translate3d(-3%,-2%,0) rotate(0deg) scale(1); } to{ transform:translate3d(3%,3%,0) rotate(8deg) scale(1.12); } }
+#bootLoader .bl-stars{ position:absolute; inset:0; pointer-events:none; }
+#bootLoader .bl-stars i{ position:absolute; width:3px; height:3px; border-radius:50%; background:#fff; opacity:0;
+  animation:blTwinkle 3.2s ease-in-out infinite; }
+@keyframes blTwinkle{ 0%,100%{ opacity:0; transform:scale(.5); } 50%{ opacity:.9; transform:scale(1.3); } }
+
+/* ---- 舞い上がるお菓子 ---- */
+#bootLoader .bl-float{ position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+#bootLoader .bl-float span{ position:absolute; bottom:-12%; font-size:22px; opacity:0; filter:drop-shadow(0 4px 10px rgba(0,0,0,.4));
+  animation:blRise linear infinite; }
+@keyframes blRise{ 0%{ transform:translate3d(0,0,0) rotate(0deg); opacity:0; } 12%{ opacity:.85; }
+  85%{ opacity:.7; } 100%{ transform:translate3d(var(--dx,20px),-125vh,0) rotate(var(--rot,240deg)); opacity:0; } }
+
+/* ---- 中央 ---- */
+#bootLoader .bl-center{ position:relative; z-index:2; width:100%; max-width:340px; display:flex; flex-direction:column; align-items:center; text-align:center; }
+
+/* 光る宝珠(リング2本 + 中央のお菓子) */
+#bootLoader .bl-orb{ position:relative; width:138px; height:138px; margin-bottom:22px; display:grid; place-items:center; }
+#bootLoader .bl-orb::before{ content:''; position:absolute; inset:-26px; border-radius:50%;
+  background:radial-gradient(closest-side, color-mix(in srgb, var(--bl-a) 55%, transparent), transparent 72%);
+  animation:blPulse 2.6s ease-in-out infinite; }
+@keyframes blPulse{ 0%,100%{ transform:scale(.92); opacity:.65; } 50%{ transform:scale(1.08); opacity:1; } }
+#bootLoader .bl-ring{ position:absolute; inset:0; border-radius:50%; border:2px solid transparent;
+  border-top-color:var(--bl-a); border-right-color:color-mix(in srgb, var(--bl-a) 30%, transparent);
+  animation:blSpin 1.5s linear infinite; filter:drop-shadow(0 0 8px color-mix(in srgb, var(--bl-a) 70%, transparent)); }
+#bootLoader .bl-ring.r2{ inset:12px; border-top-color:var(--bl-b); border-right-color:transparent; border-left-color:color-mix(in srgb, var(--bl-b) 30%, transparent);
+  animation-duration:2.3s; animation-direction:reverse; filter:drop-shadow(0 0 8px color-mix(in srgb, var(--bl-b) 70%, transparent)); }
+@keyframes blSpin{ to{ transform:rotate(360deg); } }
+#bootLoader .bl-core{ position:relative; width:78px; height:78px; border-radius:50%; display:grid; place-items:center; font-size:42px;
+  background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.28), rgba(255,255,255,.04) 60%), rgba(20,10,44,.85);
+  border:1px solid rgba(255,255,255,.22); box-shadow:inset 0 0 22px color-mix(in srgb, var(--bl-a) 35%, transparent), 0 10px 30px rgba(0,0,0,.5);
+  animation:blBob 2.4s ease-in-out infinite; }
+#bootLoader .bl-core b{ font-weight:400; display:block; animation:blWob 3.6s ease-in-out infinite; }
+@keyframes blBob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-5px); } }
+@keyframes blWob{ 0%,100%{ transform:rotate(-8deg); } 50%{ transform:rotate(8deg) scale(1.06); } }
+/* 周回する小さなお菓子 */
+#bootLoader .bl-sat{ position:absolute; inset:0; animation:blSpin 6s linear infinite; }
+#bootLoader .bl-sat span{ position:absolute; top:-9px; left:50%; margin-left:-9px; font-size:17px; }
+#bootLoader .bl-sat.s2{ animation-duration:9s; animation-direction:reverse; inset:-8px; }
+#bootLoader .bl-sat.s2 span{ font-size:14px; top:auto; bottom:-8px; }
+
+/* ロゴ */
+#bootLoader .bl-logo{ font-family:'Shippori Mincho B1','Baloo 2',serif; font-weight:800; font-size:clamp(24px, 7.6vw, 36px); letter-spacing:.06em; line-height:1.1; white-space:nowrap;
+  background:linear-gradient(100deg, var(--bl-a) 0%, #fff6d6 45%, var(--bl-a) 55%, var(--bl-b) 100%); background-size:220% 100%;
+  -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 2px 14px color-mix(in srgb, var(--bl-a) 45%, transparent));
+  animation:blSheen 3.4s ease-in-out infinite; }
+@keyframes blSheen{ 0%,100%{ background-position:0% 0; } 50%{ background-position:100% 0; } }
+#bootLoader .bl-sub{ margin-top:6px; font-size:10.5px; letter-spacing:.5em; opacity:.75; padding-left:.5em; }
+#bootLoader .bl-logo-img{ display:none; max-width:78%; max-height:96px; object-fit:contain; filter:drop-shadow(0 6px 18px rgba(0,0,0,.5)); }
+#bootLoader.has-logo .bl-logo-img{ display:block; }
+#bootLoader.has-logo .bl-logo, #bootLoader.has-logo .bl-sub{ display:none; }
+
+/* 進行バー */
+#bootLoader .bl-bar{ position:relative; width:100%; height:8px; margin-top:30px; border-radius:99px; overflow:hidden;
+  background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.12); box-shadow:inset 0 1px 3px rgba(0,0,0,.5); }
+#bootLoader .bl-bar i{ position:absolute; inset:0 auto 0 0; width:0%; border-radius:inherit;
+  background:linear-gradient(90deg, var(--bl-c), var(--bl-b), var(--bl-a)); box-shadow:0 0 14px color-mix(in srgb, var(--bl-a) 70%, transparent);
+  transition:width .35s cubic-bezier(.2,.8,.2,1); }
+#bootLoader .bl-bar i::after{ content:''; position:absolute; top:0; bottom:0; width:40%; left:-40%;
+  background:linear-gradient(100deg, transparent, rgba(255,255,255,.65), transparent); animation:blShine 1.6s ease-in-out infinite; }
+@keyframes blShine{ to{ left:110%; } }
+#bootLoader .bl-pct{ margin-top:9px; font:800 12px 'Baloo 2','Nunito',sans-serif; letter-spacing:.12em; color:var(--bl-a); font-variant-numeric:tabular-nums; }
+
+/* 状態の文字 / ヒント */
+#bootLoader .bl-status{ margin-top:4px; min-height:20px; font-size:13px; font-weight:700; letter-spacing:.04em; opacity:.95; }
+#bootLoader .bl-status.warn{ color:#ffd9a0; }
+#bootLoader .bl-sub2{ margin-top:2px; min-height:16px; font-size:11px; opacity:.7; }
+#bootLoader .bl-tip{ margin-top:26px; padding:10px 14px; width:100%; min-height:44px; display:flex; align-items:center; justify-content:center; gap:8px;
+  font-size:12px; line-height:1.5; color:rgba(255,247,230,.85); border-radius:10px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+  transition:opacity .35s ease; }
+#bootLoader .bl-tip.swap{ opacity:0; }
+#bootLoader .bl-tip b{ color:var(--bl-a); font-size:10px; letter-spacing:.18em; flex-shrink:0; }
+
+/* ---- 動きを減らす設定 ---- */
+@media (prefers-reduced-motion: reduce){
+  #bootLoader *, #bootLoader *::before, #bootLoader *::after{ animation:none !important; }
+  #bootLoader .bl-float, #bootLoader .bl-stars{ display:none; }
+  #bootLoader .bl-ring{ border-color:var(--bl-a); opacity:.6; }
+}
