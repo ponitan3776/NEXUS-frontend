@@ -7,10 +7,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install && npm run build
-      - run: npx surge ./dist nexus-vortx.surge.sh
+
+      # ビルドはせず、今のファイル（./）をそのままデプロイします
+      - run: npx surge ./ nexus-vortx.surge.sh
         env:
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
